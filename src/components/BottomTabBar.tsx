@@ -15,11 +15,18 @@ export function BottomTabBar({ currentPage, onHome, onCustom, onGuide, customLoa
         className={`ios-tab-item ${currentPage === 'home' ? 'active' : ''}`}
         onClick={onHome}
       >
-        <img 
-          src={`${import.meta.env.BASE_URL}flash.png`} 
-          alt="Quick view" 
-          className="ios-tab-icon"
-        />
+        <div 
+          className="ios-tab-icon-wrapper"
+          style={currentPage === 'home' ? {
+            '--icon-mask-url': `url(${import.meta.env.BASE_URL}flash.png)`
+          } as React.CSSProperties : undefined}
+        >
+          <img 
+            src={`${import.meta.env.BASE_URL}flash.png`} 
+            alt="Quick view" 
+            className="ios-tab-icon"
+          />
+        </div>
         <span className="ios-tab-label">Quick view</span>
       </button>
       <button
@@ -27,22 +34,36 @@ export function BottomTabBar({ currentPage, onHome, onCustom, onGuide, customLoa
         onClick={onCustom}
         disabled={customLoading}
       >
-        <img 
-          src={`${import.meta.env.BASE_URL}equalizer.png`} 
-          alt="Custom" 
-          className="ios-tab-icon"
-        />
+        <div 
+          className="ios-tab-icon-wrapper"
+          style={currentPage === 'setup' ? {
+            '--icon-mask-url': `url(${import.meta.env.BASE_URL}equalizer.png)`
+          } as React.CSSProperties : undefined}
+        >
+          <img 
+            src={`${import.meta.env.BASE_URL}equalizer.png`} 
+            alt="Custom" 
+            className="ios-tab-icon"
+          />
+        </div>
         <span className="ios-tab-label">{customLoading ? 'Loading...' : 'Custom'}</span>
       </button>
       <button
         className={`ios-tab-item ${currentPage === 'guide' ? 'active' : ''}`}
         onClick={onGuide}
       >
-        <img 
-          src={`${import.meta.env.BASE_URL}wardrobe.png`} 
-          alt="Wardrobe" 
-          className="ios-tab-icon"
-        />
+        <div 
+          className="ios-tab-icon-wrapper"
+          style={currentPage === 'guide' ? {
+            '--icon-mask-url': `url(${import.meta.env.BASE_URL}wardrobe.png)`
+          } as React.CSSProperties : undefined}
+        >
+          <img 
+            src={`${import.meta.env.BASE_URL}wardrobe.png`} 
+            alt="Wardrobe" 
+            className="ios-tab-icon"
+          />
+        </div>
         <span className="ios-tab-label">Wardrobe</span>
       </button>
     </div>
