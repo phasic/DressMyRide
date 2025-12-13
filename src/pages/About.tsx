@@ -49,6 +49,9 @@ export function About({ onBack }: AboutProps) {
               <a href="https://www.flaticon.com/free-icons/settings" target="_blank" rel="noopener noreferrer">
                 Settings icons created by Freepik - Flaticon
               </a>
+              <a href="https://www.flaticon.com/free-icons/installer" target="_blank" rel="noopener noreferrer">
+                Installer icons created by Abdul-Aziz - Flaticon
+              </a>
             </div>
           </div>
 

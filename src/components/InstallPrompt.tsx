@@ -8,7 +8,30 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 // Store the deferred prompt globally so we can access it even if component unmounts/remounts
-let globalDeferredPrompt: BeforeInstallPromptEvent | null = null;
+export let globalDeferredPrompt: BeforeInstallPromptEvent | null = null;
+
+// Export function to check if app is installed
+export function isAppInstalled(): boolean {
+  return window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+}
+
+// Export function to trigger install
+export async function triggerInstall(): Promise<boolean> {
+  const prompt = globalDeferredPrompt;
+  if (!prompt) {
+    return false;
+  }
+  
+  prompt.prompt();
+  const { outcome } = await prompt.userChoice;
+  
+  if (outcome === 'accepted') {
+    globalDeferredPrompt = null;
+    return true;
+  }
+  
+  return false;
+}
 
 // Set up listener immediately when module loads (before component mounts)
 if (typeof window !== 'undefined') {
@@ -29,7 +52,7 @@ export function InstallPrompt() {
 
   useEffect(() => {
     // Check if app is already installed
-    if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
+    if (isAppInstalled()) {
       setIsInstalled(true);
       return;
     }
@@ -183,9 +206,13 @@ export function InstallPrompt() {
   };
 
   const forceShow = storage.getForceInstallPrompt();
+  const disablePrompt = storage.getDisableInstallPrompt();
   
-  // Don't show if installed, or if not showing and not forced
-  if (isInstalled || (!showPrompt && !forceShow)) {
+  // Don't show if:
+  // - App is already installed
+  // - User has disabled the prompt (unless forced via DevTools)
+  // - Not showing and not forced
+  if (isInstalled || (disablePrompt && !forceShow) || (!showPrompt && !forceShow)) {
     return null;
   }
 

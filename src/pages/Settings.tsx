@@ -13,6 +13,7 @@ export function Settings({ onBack, onAbout }: SettingsProps) {
   const [dateFormat, setDateFormat] = useState<'custom' | 'system'>(() => storage.getDateFormat());
   const [defaultDuration, setDefaultDuration] = useState(() => storage.getDefaultDuration());
   const [demoMode, setDemoMode] = useState(() => storage.getDemoMode());
+  const [disableInstallPrompt, setDisableInstallPrompt] = useState(() => storage.getDisableInstallPrompt());
   const [saved, setSaved] = useState(false);
   const [savedMessage, setSavedMessage] = useState<string>('');
   const [showClearCacheConfirm, setShowClearCacheConfirm] = useState(false);
@@ -37,6 +38,10 @@ export function Settings({ onBack, onAbout }: SettingsProps) {
   useEffect(() => {
     storage.setDemoMode(demoMode);
   }, [demoMode]);
+
+  useEffect(() => {
+    storage.setDisableInstallPrompt(disableInstallPrompt);
+  }, [disableInstallPrompt]);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -193,6 +198,22 @@ export function Settings({ onBack, onAbout }: SettingsProps) {
                   </button>
                 </div>
               )}
+            </div>
+
+            <div className="form-group">
+              <div className="toggle-container">
+                <label htmlFor="disableInstallPrompt" className="toggle-label">Disable Install Prompt</label>
+                <label className="toggle-switch">
+                  <input
+                    id="disableInstallPrompt"
+                    type="checkbox"
+                    checked={disableInstallPrompt}
+                    onChange={(e) => setDisableInstallPrompt(e.target.checked)}
+                  />
+                  <span className="toggle-slider"></span>
+                </label>
+              </div>
+              <small>Never show the install prompt to add this app to your home screen</small>
             </div>
 
         {saved && <div className="success">{savedMessage}</div>}

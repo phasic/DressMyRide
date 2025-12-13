@@ -13,6 +13,7 @@ const STORAGE_KEYS = {
   WELCOME_SEEN: 'dressmyride_welcome_seen',
   INSTALL_PROMPT_DISMISSED: 'dressmyride_install_prompt_dismissed',
   FORCE_INSTALL_PROMPT: 'dressmyride_force_install_prompt',
+  DISABLE_INSTALL_PROMPT: 'dressmyride_disable_install_prompt',
 } as const;
 
 export const storage = {
@@ -224,6 +225,14 @@ export const storage = {
 
       setForceInstallPrompt: (enabled: boolean): void => {
         localStorage.setItem(STORAGE_KEYS.FORCE_INSTALL_PROMPT, enabled ? 'true' : 'false');
+      },
+
+      getDisableInstallPrompt: (): boolean => {
+        return localStorage.getItem(STORAGE_KEYS.DISABLE_INSTALL_PROMPT) === 'true';
+      },
+
+      setDisableInstallPrompt: (disabled: boolean): void => {
+        localStorage.setItem(STORAGE_KEYS.DISABLE_INSTALL_PROMPT, disabled ? 'true' : 'false');
       },
     };
 

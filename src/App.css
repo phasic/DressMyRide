@@ -195,18 +195,21 @@ header h1 {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-.settings-icon {
+.settings-icon,
+.install-icon {
   width: 22px;
   height: 22px;
   display: block;
 }
 
-:root.dark .settings-icon {
+:root.dark .settings-icon,
+:root.dark .install-icon {
   filter: brightness(0) saturate(100%) invert(1);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not(.light) .settings-icon {
+  :root:not(.light) .settings-icon,
+  :root:not(.light) .install-icon {
     filter: brightness(0) saturate(100%) invert(1);
   }
 }
