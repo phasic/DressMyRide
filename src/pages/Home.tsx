@@ -27,6 +27,12 @@ export function Home({ onQuickRecommendation, weatherOverride }: HomeProps) {
     location: Location;
   } | null>(null);
   const [quickViewLoading, setQuickViewLoading] = useState(false);
+  const [pullToRefresh, setPullToRefresh] = useState({
+    isPulling: false,
+    pullDistance: 0,
+    isRefreshing: false,
+  });
+  const [touchStart, setTouchStart] = useState<{ y: number; scrollTop: number } | null>(null);
 
   const loadQuickView = async () => {
     setQuickViewLoading(true);
@@ -126,6 +132,72 @@ export function Home({ onQuickRecommendation, weatherOverride }: HomeProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weatherOverride]);
 
+  // Pull-to-refresh handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    // Only start pull-to-refresh if at the top of the page
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    
+    if (scrollTop === 0) {
+      setTouchStart({
+        y: e.touches[0].clientY,
+        scrollTop: scrollTop,
+      });
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStart) return;
+    
+    const currentY = e.touches[0].clientY;
+    const pullDistance = Math.max(0, currentY - touchStart.y);
+    
+    // Only allow pull-to-refresh if pulling down
+    if (pullDistance > 0) {
+      setPullToRefresh({
+        isPulling: true,
+        pullDistance: Math.min(pullDistance, 80), // Max pull distance
+        isRefreshing: false,
+      });
+      
+      // Prevent default scrolling when pulling
+      if (pullDistance > 10) {
+        e.preventDefault();
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart) return;
+    
+    if (pullToRefresh.pullDistance > 50) {
+      // Trigger refresh
+      setPullToRefresh({
+        isPulling: true,
+        pullDistance: 60,
+        isRefreshing: true,
+      });
+      loadQuickView();
+      
+      // Reset after animation
+      setTimeout(() => {
+        setPullToRefresh({
+          isPulling: false,
+          pullDistance: 0,
+          isRefreshing: false,
+        });
+      }, 800);
+    } else {
+      // Reset without refreshing
+      setPullToRefresh({
+        isPulling: false,
+        pullDistance: 0,
+        isRefreshing: false,
+      });
+    }
+    
+    setTouchStart(null);
+  };
+
 
   const isMetric = quickViewData?.config.units === 'metric';
   const tempUnit = isMetric ? '°C' : '°F';
@@ -155,7 +227,16 @@ export function Home({ onQuickRecommendation, weatherOverride }: HomeProps) {
   };
 
   return (
-    <div className="page home">
+    <div 
+      className="page home"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      style={{
+        transform: pullToRefresh.isPulling ? `translateY(${Math.min(pullToRefresh.pullDistance, 80)}px)` : 'translateY(0)',
+        transition: pullToRefresh.isPulling ? 'none' : 'transform 0.3s ease-out',
+      }}
+    >
       {quickViewLoading && (
         <div className="loading">
           <div className="spinner"></div>
@@ -174,11 +255,30 @@ export function Home({ onQuickRecommendation, weatherOverride }: HomeProps) {
 
       {quickViewData && !quickViewLoading && (
         <div className="quick-view">
+          {/* Pull-to-refresh indicator */}
+          {pullToRefresh.isPulling && (
+            <div 
+              className="pull-to-refresh-indicator"
+              style={{
+                transform: `translateX(-50%)`,
+                opacity: Math.min(pullToRefresh.pullDistance / 50, 1),
+              }}
+            >
+              <img 
+                src={`${import.meta.env.BASE_URL}refresh.png`} 
+                alt="Refresh" 
+                className={`pull-to-refresh-icon ${pullToRefresh.isRefreshing ? 'spinning' : ''}`}
+              />
+              <span className="pull-to-refresh-text">
+                {pullToRefresh.isRefreshing ? 'Refreshing...' : 'Pull to refresh'}
+              </span>
+            </div>
+          )}
           <div className="quick-view-header">
             <div>
               <h2>What to wear</h2>
               <button
-                className="refresh-btn"
+                className="refresh-btn desktop-only"
                 onClick={loadQuickView}
                 disabled={quickViewLoading}
                 aria-label="Refresh"

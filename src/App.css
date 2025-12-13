@@ -761,6 +761,7 @@ main {
 
 .quick-view {
   margin-top: 1rem;
+  position: relative;
 }
 
 .quick-view-header {
@@ -791,6 +792,13 @@ main {
   transition: opacity 0.15s, transform 0.15s;
   -webkit-tap-highlight-color: transparent;
   border-radius: 8px;
+}
+
+/* Hide refresh button on mobile */
+@media (max-width: 768px) {
+  .refresh-btn.desktop-only {
+    display: none;
+  }
 }
 
 .refresh-btn:hover {
@@ -1189,6 +1197,67 @@ img.ios-tab-icon {
   :root:not(.light) .modal-content {
     background-color: rgba(28, 28, 30, 0.95);
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* Hide refresh button on mobile */
+@media (max-width: 768px) {
+  .refresh-btn.desktop-only {
+    display: none;
+  }
+}
+
+/* Pull-to-refresh indicator */
+.pull-to-refresh-indicator {
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+  width: 100%;
+  padding-bottom: 8px;
+}
+
+.pull-to-refresh-text {
+  font-size: 14px;
+  color: var(--secondary-color);
+  font-weight: 500;
+}
+
+.pull-to-refresh-icon {
+  width: 24px;
+  height: 24px;
+  filter: brightness(0) saturate(100%) invert(27%) sepia(95%) saturate(7482%) hue-rotate(212deg) brightness(110%) contrast(101%);
+  transition: transform 0.3s ease-out;
+}
+
+.pull-to-refresh-icon.spinning {
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+:root.dark .pull-to-refresh-icon {
+  filter: brightness(0) saturate(100%) invert(40%) sepia(95%) saturate(7482%) hue-rotate(212deg) brightness(130%) contrast(101%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .pull-to-refresh-icon {
+    filter: brightness(0) saturate(100%) invert(40%) sepia(95%) saturate(7482%) hue-rotate(212deg) brightness(130%) contrast(101%);
   }
 }
 
