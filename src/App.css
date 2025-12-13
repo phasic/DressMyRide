@@ -1097,16 +1097,21 @@ main {
 .quick-weather-badge {
   flex: 1;
   min-width: 0;
-  background-color: var(--primary-color);
-  color: white;
+  background-color: rgba(0, 122, 255, 0.2);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  color: var(--text-color);
   padding: 10px 5px;
-  border-radius: 12px;
+  border-radius: 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 4px;
   box-sizing: border-box;
+  box-shadow: 0 4px 16px rgba(0, 122, 255, 0.15), 0 0 1px rgba(0, 122, 255, 0.2);
+  border: 0.5px solid rgba(0, 122, 255, 0.3);
+  transition: all 0.2s ease;
 }
 
 .badge-label {
@@ -1126,7 +1131,18 @@ main {
   width: 24px;
   height: 24px;
   object-fit: contain;
-  filter: brightness(0) invert(1);
+  opacity: 0.9;
+  filter: brightness(0) saturate(100%);
+}
+
+:root.dark .badge-icon {
+  filter: brightness(0) saturate(100%) invert(1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .badge-icon {
+    filter: brightness(0) saturate(100%) invert(1);
+  }
 }
 
 .badge-value {
@@ -1146,6 +1162,24 @@ main {
 
 .badge-dash {
   opacity: 0.6;
+}
+
+:root.dark .quick-weather-badge {
+  background-color: rgba(10, 132, 255, 0.2);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 4px 16px rgba(10, 132, 255, 0.2), 0 0 1px rgba(10, 132, 255, 0.3);
+  border: 0.5px solid rgba(10, 132, 255, 0.25);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .quick-weather-badge {
+    background-color: rgba(10, 132, 255, 0.2);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    box-shadow: 0 4px 16px rgba(10, 132, 255, 0.2), 0 0 1px rgba(10, 132, 255, 0.3);
+    border: 0.5px solid rgba(10, 132, 255, 0.25);
+  }
 }
 
 @media (max-width: 480px) {
