@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Location, RideConfig, WeatherSummary, ClothingRecommendation } from '../types';
 import { storage } from '../utils/storage';
-import { fetchWeatherForecast } from '../services/weatherService';
+import { fetchWeatherForecast, reverseGeocode } from '../services/weatherService';
 import { recommendClothing } from '../logic/clothingEngine';
 import { formatDateTime } from '../utils/dateFormat';
+import { generateDemoWeather } from '../utils/demoWeather';
 
 interface HomeProps {
   onLocationFound: (location: Location) => void;
@@ -31,6 +32,43 @@ export function Home({ onQuickRecommendation, weatherOverride }: HomeProps) {
     setQuickViewLoading(true);
     setError(null);
 
+    const isDemoMode = storage.getDemoMode();
+    
+    // In demo mode, we don't need geolocation
+    if (isDemoMode) {
+      try {
+        const location: Location = {
+          lat: 0, // Demo location
+          lon: 0,
+          city: 'Demo Location',
+        };
+
+        const config: RideConfig = {
+          startTime: new Date(),
+          durationHours: storage.getDefaultDuration(),
+          units: storage.getUnits(),
+        };
+
+        let weather: WeatherSummary = generateDemoWeather();
+        
+        // Apply weather override if in dev mode
+        if (weatherOverride) {
+          weather = { ...weather, ...weatherOverride };
+        }
+        
+        const recommendation = recommendClothing(weather, config);
+
+        setQuickViewData({ weather, recommendation, config, location });
+        onQuickRecommendation(location, weather, recommendation, config);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load demo weather');
+      } finally {
+        setQuickViewLoading(false);
+      }
+      return;
+    }
+
     if (!navigator.geolocation) {
       setError('Geolocation is not supported by your browser.');
       setQuickViewLoading(false);
@@ -45,13 +83,19 @@ export function Home({ onQuickRecommendation, weatherOverride }: HomeProps) {
             lon: position.coords.longitude,
           };
 
+          // Try to get city name via reverse geocoding
+          const cityName = await reverseGeocode(location.lat, location.lon);
+          if (cityName) {
+            location.city = cityName;
+          }
+
           const config: RideConfig = {
             startTime: new Date(),
             durationHours: storage.getDefaultDuration(),
             units: storage.getUnits(),
           };
 
-          let weather = await fetchWeatherForecast(location, config);
+          let weather: WeatherSummary = await fetchWeatherForecast(location, config);
           
           // Apply weather override if in dev mode
           if (weatherOverride) {
@@ -280,7 +324,16 @@ export function Home({ onQuickRecommendation, weatherOverride }: HomeProps) {
               <div className="weather-item">
                 <span className="label">Location:</span>
                 <span className="value">
-                  {quickViewData.location.city || `${quickViewData.location.lat.toFixed(2)}, ${quickViewData.location.lon.toFixed(2)}`}
+                  {quickViewData.location.city ? (
+                    <div>
+                      <div>{quickViewData.location.city}</div>
+                      <div className="location-coords">
+                        {quickViewData.location.lat.toFixed(2)}, {quickViewData.location.lon.toFixed(2)}
+                      </div>
+                    </div>
+                  ) : (
+                    `${quickViewData.location.lat.toFixed(2)}, ${quickViewData.location.lon.toFixed(2)}`
+                  )}
                 </span>
               </div>
             </div>

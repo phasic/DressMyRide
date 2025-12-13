@@ -12,6 +12,7 @@ export function Settings({ onBack, onAbout }: SettingsProps) {
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>(() => storage.getTheme());
   const [dateFormat, setDateFormat] = useState<'custom' | 'system'>(() => storage.getDateFormat());
   const [defaultDuration, setDefaultDuration] = useState(() => storage.getDefaultDuration());
+  const [demoMode, setDemoMode] = useState(() => storage.getDemoMode());
   const [saved, setSaved] = useState(false);
   const [savedMessage, setSavedMessage] = useState<string>('');
   const [showClearCacheConfirm, setShowClearCacheConfirm] = useState(false);
@@ -32,6 +33,10 @@ export function Settings({ onBack, onAbout }: SettingsProps) {
   useEffect(() => {
     storage.setDefaultDuration(defaultDuration);
   }, [defaultDuration]);
+
+  useEffect(() => {
+    storage.setDemoMode(demoMode);
+  }, [demoMode]);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,6 +160,39 @@ export function Settings({ onBack, onAbout }: SettingsProps) {
                 onChange={(e) => setDefaultDuration(parseFloat(e.target.value) || 2)}
               />
               <small>Default duration for quick view rides (0.5 to 24 hours)</small>
+            </div>
+
+            <div className="form-group">
+              <div className="toggle-container">
+                <label htmlFor="demoMode" className="toggle-label">Demo Mode</label>
+                <label className="toggle-switch">
+                  <input
+                    id="demoMode"
+                    type="checkbox"
+                    checked={demoMode}
+                    onChange={(e) => setDemoMode(e.target.checked)}
+                  />
+                  <span className="toggle-slider"></span>
+                </label>
+              </div>
+              <small>Use random weather conditions to try the app without an API key</small>
+              {demoMode && (
+                <div style={{ marginTop: '12px' }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      // Clear cache to force new random weather on next load
+                      storage.clearWeatherCache();
+                      setSavedMessage('Weather will be randomized on next load!');
+                      setSaved(true);
+                      setTimeout(() => setSaved(false), 2000);
+                    }}
+                  >
+                    Randomize Weather
+                  </button>
+                </div>
+              )}
             </div>
 
         {saved && <div className="success">{savedMessage}</div>}

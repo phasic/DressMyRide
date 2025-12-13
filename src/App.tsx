@@ -11,6 +11,7 @@ import { BottomTabBar } from './components/BottomTabBar';
 import { fetchWeatherForecast } from './services/weatherService';
 import { recommendClothing } from './logic/clothingEngine';
 import { storage } from './utils/storage';
+import { generateDemoWeather } from './utils/demoWeather';
 import './App.css';
 
 function App() {
@@ -56,7 +57,14 @@ function App() {
     setConfig(rideConfig);
 
     try {
-      let weatherData = await fetchWeatherForecast(loc, rideConfig);
+      let weatherData: WeatherSummary;
+      
+      // Use demo mode if enabled
+      if (storage.getDemoMode()) {
+        weatherData = generateDemoWeather();
+      } else {
+        weatherData = await fetchWeatherForecast(loc, rideConfig);
+      }
       
       // Apply weather override if in dev mode
       if (weatherOverride) {

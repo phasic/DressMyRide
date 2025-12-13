@@ -96,3 +96,29 @@ export async function geocodeCity(cityName: string): Promise<Location> {
   };
 }
 
+export async function reverseGeocode(lat: number, lon: number): Promise<string | null> {
+  const apiKey = storage.getApiKey();
+  if (!apiKey) {
+    return null; // Silently fail if no API key
+  }
+
+  try {
+    const url = `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${apiKey}`;
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    if (!data || data.length === 0) {
+      return null;
+    }
+
+    // Return the city/town name
+    return data[0].name || null;
+  } catch {
+    return null;
+  }
+}
+

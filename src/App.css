@@ -109,10 +109,10 @@ body {
 }
 
 header {
-  background-color: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-bottom: 0.5px solid var(--separator-color);
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.3);
   padding: 8px 16px;
   padding-top: max(8px, env(safe-area-inset-top));
   display: flex;
@@ -122,15 +122,24 @@ header {
   top: 0;
   z-index: 100;
   min-height: 44px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1), 0 0 1px rgba(0, 0, 0, 0.05);
 }
 
 :root.dark header {
-  background-color: rgba(0, 0, 0, 0.8);
+  background-color: rgba(28, 28, 30, 0.15);
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not(.light) header {
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: rgba(28, 28, 30, 0.15);
+    backdrop-filter: blur(10px) saturate(120%);
+    -webkit-backdrop-filter: blur(10px) saturate(120%);
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 1px rgba(255, 255, 255, 0.05);
   }
 }
 
@@ -623,6 +632,13 @@ main {
   font-weight: 600;
 }
 
+.location-coords {
+  font-size: 0.85em;
+  color: var(--secondary-color);
+  font-weight: 400;
+  margin-top: 4px;
+}
+
 .explanation-section {
   margin-bottom: calc(var(--spacing) * 2);
 }
@@ -657,6 +673,90 @@ main {
 .checkbox-label input[type="checkbox"] {
   width: auto;
   cursor: pointer;
+}
+
+.toggle-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.toggle-label {
+  font-size: 17px;
+  font-weight: 400;
+  color: var(--text-color);
+  cursor: pointer;
+  margin: 0;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 51px;
+  height: 31px;
+  cursor: pointer;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  transition: 0.3s;
+  border-radius: 31px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 27px;
+  width: 27px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: var(--primary-color);
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(20px);
+}
+
+.toggle-switch input:focus + .toggle-slider {
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.3);
+}
+
+:root.dark .toggle-slider {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+:root.dark .toggle-switch input:checked + .toggle-slider {
+  background-color: var(--primary-color);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .toggle-slider {
+    background-color: rgba(255, 255, 255, 0.3);
+  }
+
+  :root:not(.light) .toggle-switch input:checked + .toggle-slider {
+    background-color: var(--primary-color);
+  }
 }
 
 .quick-view {

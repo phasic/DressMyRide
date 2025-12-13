@@ -8,6 +8,7 @@ const STORAGE_KEYS = {
   THEME: 'dressmyride_theme',
   DATE_FORMAT: 'dressmyride_date_format',
   DEFAULT_DURATION: 'dressmyride_default_duration',
+  DEMO_MODE: 'dressmyride_demo_mode',
 } as const;
 
 export const storage = {
@@ -91,6 +92,15 @@ export const storage = {
 
       setDefaultDuration: (duration: number): void => {
         localStorage.setItem(STORAGE_KEYS.DEFAULT_DURATION, duration.toString());
+      },
+
+      getDemoMode: (): boolean => {
+        const value = localStorage.getItem(STORAGE_KEYS.DEMO_MODE);
+        return value === 'true';
+      },
+
+      setDemoMode: (enabled: boolean): void => {
+        localStorage.setItem(STORAGE_KEYS.DEMO_MODE, enabled ? 'true' : 'false');
       },
     };
 
