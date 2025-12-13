@@ -217,9 +217,6 @@ export function Home({ onQuickRecommendation, weatherOverride }: HomeProps) {
   const tempUnit = isMetric ? '°C' : '°F';
   const windUnit = isMetric ? 'km/h' : 'mph';
 
-  const formatTemp = (temp: number) => Math.round(temp) + tempUnit;
-  const formatWind = (wind: number) => Math.round(wind) + ' ' + windUnit;
-
   // Helper function to determine emoji for clothing items
   const getItemEmoji = (item: string, weather: WeatherSummary, config: RideConfig): string => {
     const itemLower = item.toLowerCase();

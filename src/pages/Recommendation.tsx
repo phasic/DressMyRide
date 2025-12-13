@@ -21,14 +21,6 @@ export function Recommendation({
   const tempUnit = isMetric ? '°C' : '°F';
   const windUnit = isMetric ? 'km/h' : 'mph';
 
-  const formatTemp = (temp: number) => {
-    return Math.round(temp) + tempUnit;
-  };
-
-  const formatWind = (wind: number) => {
-    return Math.round(wind) + ' ' + windUnit;
-  };
-
   // Helper function to determine emoji for clothing items
   const getItemEmoji = (item: string, weather: WeatherSummary, config: RideConfig): string => {
     const itemLower = item.toLowerCase();
