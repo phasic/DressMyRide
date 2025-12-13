@@ -94,7 +94,7 @@ function App() {
       
       // Use demo mode if enabled
       if (storage.getDemoMode()) {
-        weatherData = generateDemoWeather();
+        weatherData = generateDemoWeather(rideConfig.durationHours);
       } else {
         weatherData = await fetchWeatherForecast(loc, rideConfig);
       }

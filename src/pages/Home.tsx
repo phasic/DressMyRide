@@ -5,6 +5,7 @@ import { fetchWeatherForecast, reverseGeocode } from '../services/weatherService
 import { recommendClothing } from '../logic/clothingEngine';
 import { formatDateTime } from '../utils/dateFormat';
 import { generateDemoWeather } from '../utils/demoWeather';
+import { WeatherChart } from '../components/WeatherChart';
 
 interface HomeProps {
   onLocationFound: (location: Location) => void;
@@ -55,8 +56,7 @@ export function Home({ onQuickRecommendation, weatherOverride }: HomeProps) {
           durationHours: storage.getDefaultDuration(),
           units: storage.getUnits(),
         };
-
-        let weather: WeatherSummary = generateDemoWeather();
+        let weather: WeatherSummary = generateDemoWeather(config.durationHours);
         
         // Apply weather override if in dev mode
         if (weatherOverride) {
@@ -477,6 +477,12 @@ export function Home({ onQuickRecommendation, weatherOverride }: HomeProps) {
                 </span>
               </div>
             </div>
+            {quickViewData.weather.hourly && quickViewData.weather.hourly.length > 0 && (
+              <div style={{ marginTop: '24px' }}>
+                <h4 style={{ marginBottom: '16px', fontSize: '16px', fontWeight: 600 }}>Weather Evolution</h4>
+                <WeatherChart weather={quickViewData.weather} config={quickViewData.config} />
+              </div>
+            )}
           </div>
 
           <div className="explanation-section">

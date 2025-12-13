@@ -21,6 +21,17 @@ export interface WeatherForecast {
   }>;
 }
 
+export interface WeatherHourlyData {
+  dt: number; // timestamp in seconds
+  temp: number;
+  feels_like: number;
+  wind_speed: number;
+  pop: number; // probability of precipitation (0-1)
+  rain?: {
+    '1h': number; // precipitation intensity in mm
+  };
+}
+
 export interface WeatherSummary {
   minTemp: number;
   maxTemp: number;
@@ -29,6 +40,7 @@ export interface WeatherSummary {
   maxWindSpeed: number;
   maxRainProbability: number;
   maxPrecipitationIntensity: number;
+  hourly?: WeatherHourlyData[]; // Optional hourly data for charts
 }
 
 export interface ClothingRecommendation {

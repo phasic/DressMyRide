@@ -1,6 +1,7 @@
 import { ClothingRecommendation, WeatherSummary, RideConfig, Location } from '../types';
 import { storage } from '../utils/storage';
 import { formatDateTime } from '../utils/dateFormat';
+import { WeatherChart } from '../components/WeatherChart';
 
 interface RecommendationProps {
   recommendation: ClothingRecommendation;
@@ -223,6 +224,12 @@ export function Recommendation({
               </span>
             </div>
           </div>
+          {weather.hourly && weather.hourly.length > 0 && (
+            <div style={{ marginTop: '24px' }}>
+              <h4 style={{ marginBottom: '16px', fontSize: '16px', fontWeight: 600 }}>Weather Evolution</h4>
+              <WeatherChart weather={weather} config={config} />
+            </div>
+          )}
         </div>
 
         <div className="explanation-section">

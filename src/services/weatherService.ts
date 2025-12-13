@@ -21,9 +21,9 @@ export async function fetchWeatherForecast(
   const cacheKey = `${location.lat.toFixed(1)},${location.lon.toFixed(1)},${startTimeRounded},${durationNormalized}`;
   const cached = storage.getWeatherCache(cacheKey);
   
-  // Use cache if it exists and is still valid (not expired)
-  // If cache is expired or doesn't exist, make an API call
-  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+  // Use cache if it exists and is still valid (not expired) and has hourly data
+  // If cache is expired, doesn't exist, or lacks hourly data, make an API call
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION && cached.data.hourly && cached.data.hourly.length > 0) {
     return cached.data;
   }
 
@@ -70,6 +70,15 @@ export async function fetchWeatherForecast(
     maxPrecipitationIntensity: Math.max(
       ...rideHours.map((h) => h.rain?.['1h'] || 0)
     ),
+    // Include hourly data for charts
+    hourly: rideHours.map((h) => ({
+      dt: h.dt,
+      temp: h.temp,
+      feels_like: h.feels_like,
+      wind_speed: h.wind_speed,
+      pop: h.pop,
+      rain: h.rain,
+    })),
   };
 
   // Cache the result (keyed by location, start time, and duration)
