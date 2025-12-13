@@ -293,10 +293,17 @@ export function Home({ onQuickRecommendation, weatherOverride }: HomeProps) {
                     className="badge-icon"
                   />
                 </div>
-                <div className="badge-value">
-                  {Math.round(quickViewData.weather.minFeelsLike)}
-                  <span className="badge-unit">{tempUnit}</span>
-                </div>
+              <div className="badge-value">
+                {Math.round(quickViewData.weather.minFeelsLike) === Math.round(quickViewData.weather.maxFeelsLike) ? (
+                  <>
+                    {Math.round(quickViewData.weather.minFeelsLike)}<span className="badge-unit">{tempUnit}</span>
+                  </>
+                ) : (
+                  <>
+                    {Math.round(quickViewData.weather.minFeelsLike)}<span className="badge-unit">{tempUnit}</span> <span className="badge-dash">-</span> {Math.round(quickViewData.weather.maxFeelsLike)}<span className="badge-unit">{tempUnit}</span>
+                  </>
+                )}
+              </div>
               </div>
               <div className="quick-weather-badge">
                 <div className="badge-label">
@@ -327,6 +334,7 @@ export function Home({ onQuickRecommendation, weatherOverride }: HomeProps) {
                   />
                 </div>
                 <div className="badge-value">
+                  <span style={{ fontSize: '11px', opacity: 0.7, marginRight: '2px' }}>max</span>
                   {Math.round(quickViewData.weather.maxWindSpeed)}<span className="badge-unit"> {windUnit}</span>
                 </div>
               </div>

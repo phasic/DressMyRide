@@ -48,6 +48,16 @@ export function About({ onBack }: AboutProps) {
           </div>
 
           <div className="attribution-item">
+            <div className="attribution-title">Chart Library</div>
+            <div className="attribution-details">
+              <a href="https://recharts.org" target="_blank" rel="noopener noreferrer">
+                Recharts
+              </a>
+              <span className="attribution-note">Composable charting library built on React components</span>
+            </div>
+          </div>
+
+          <div className="attribution-item">
             <div className="attribution-title">Map Data</div>
             <div className="attribution-details">
               <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">
@@ -99,7 +109,7 @@ export function About({ onBack }: AboutProps) {
 
       <div className="about-section">
         <h3>Version</h3>
-        <p>1.0.0-e102600</p>
+        <p>1.0.0-3729f6d</p>
       </div>
 
       <div className="about-sticky-actions">
