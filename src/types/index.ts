@@ -31,8 +31,12 @@ export interface WeatherSummary {
 }
 
 export interface ClothingRecommendation {
-  mainKit: string[];
-  accessories: string[];
+  head: string[];
+  neckFace: string[];
+  chest: string[];
+  legs: string[];
+  hands: string[];
+  feet: string[];
   explanation: string[];
 }
 
@@ -48,5 +52,5 @@ export interface Location {
   city?: string;
 }
 
-export type Page = 'home' | 'setup' | 'recommendation' | 'settings' | 'manual';
+export type Page = 'home' | 'setup' | 'recommendation' | 'settings' | 'manual' | 'guide';
 

@@ -30,7 +30,7 @@ export function Home({ onLocationFound, onManualInput, onQuickRecommendation }: 
     setError(null);
 
     if (!navigator.geolocation) {
-      setError('Geolocation is not supported. Quick view requires location access.');
+      setError('Geolocation is not supported by your browser.');
       setQuickViewLoading(false);
       return;
     }
@@ -54,6 +54,7 @@ export function Home({ onLocationFound, onManualInput, onQuickRecommendation }: 
 
           setQuickViewData({ weather, recommendation, config });
           onQuickRecommendation(location, weather, recommendation, config);
+          setError(null); // Clear any previous errors
         } catch (err) {
           setError(err instanceof Error ? err.message : 'Failed to load quick view');
         } finally {
@@ -61,7 +62,7 @@ export function Home({ onLocationFound, onManualInput, onQuickRecommendation }: 
         }
       },
       () => {
-        setError('Location permission denied. Please enable location access for quick view.');
+        setError('Location permission denied. Quick view unavailable.');
         setQuickViewLoading(false);
       }
     );
@@ -116,7 +117,14 @@ export function Home({ onLocationFound, onManualInput, onQuickRecommendation }: 
         </div>
       )}
 
-      {error && <div className="error">{error}</div>}
+      {error && !quickViewData && (
+        <div className="error">
+          {error}
+          <p style={{ marginTop: '0.5rem', fontSize: '0.9rem', opacity: 0.8 }}>
+            You can still use the app by entering a city manually or using custom ride options.
+          </p>
+        </div>
+      )}
 
       {quickViewData && !quickViewLoading && (
         <div className="quick-view">
@@ -128,20 +136,66 @@ export function Home({ onLocationFound, onManualInput, onQuickRecommendation }: 
           </div>
 
           <div className="quick-clothing">
-            <div className="quick-kit">
-              <h3>Main kit</h3>
-              <ul>
-                {quickViewData.recommendation.mainKit.map((item, idx) => (
-                  <li key={idx}>{item}</li>
-                ))}
-              </ul>
-            </div>
-
-            {quickViewData.recommendation.accessories.length > 0 && (
-              <div className="quick-accessories">
-                <h3>Accessories</h3>
+            {quickViewData.recommendation.head.length > 0 && (
+              <div className="quick-kit">
+                <h3>Head</h3>
                 <ul>
-                  {quickViewData.recommendation.accessories.map((item, idx) => (
+                  {quickViewData.recommendation.head.map((item, idx) => (
+                    <li key={idx}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {quickViewData.recommendation.neckFace.length > 0 && (
+              <div className="quick-kit">
+                <h3>Neck / Face</h3>
+                <ul>
+                  {quickViewData.recommendation.neckFace.map((item, idx) => (
+                    <li key={idx}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {quickViewData.recommendation.chest.length > 0 && (
+              <div className="quick-kit">
+                <h3>Chest</h3>
+                <ul>
+                  {quickViewData.recommendation.chest.map((item, idx) => (
+                    <li key={idx}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {quickViewData.recommendation.legs.length > 0 && (
+              <div className="quick-kit">
+                <h3>Legs</h3>
+                <ul>
+                  {quickViewData.recommendation.legs.map((item, idx) => (
+                    <li key={idx}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {quickViewData.recommendation.hands.length > 0 && (
+              <div className="quick-kit">
+                <h3>Hands</h3>
+                <ul>
+                  {quickViewData.recommendation.hands.map((item, idx) => (
+                    <li key={idx}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {quickViewData.recommendation.feet.length > 0 && (
+              <div className="quick-kit">
+                <h3>Feet</h3>
+                <ul>
+                  {quickViewData.recommendation.feet.map((item, idx) => (
                     <li key={idx}>{item}</li>
                   ))}
                 </ul>
@@ -189,6 +243,32 @@ export function Home({ onLocationFound, onManualInput, onQuickRecommendation }: 
               Enter city manually
             </button>
           </div>
+        </div>
+      )}
+
+      {!quickViewData && !quickViewLoading && (
+        <div className="quick-view-actions" style={{ marginTop: '2rem' }}>
+          <button
+            className="btn btn-primary"
+            onClick={loadQuickView}
+            disabled={quickViewLoading}
+          >
+            {quickViewLoading ? 'Loading...' : '🔄 Try quick view again'}
+          </button>
+          <button
+            className="btn btn-secondary"
+            onClick={handleUseLocation}
+            disabled={loading}
+          >
+            {loading ? 'Getting location...' : 'Custom ride'}
+          </button>
+          <button
+            className="btn btn-secondary"
+            onClick={onManualInput}
+            disabled={loading}
+          >
+            Enter city manually
+          </button>
         </div>
       )}
     </div>

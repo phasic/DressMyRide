@@ -29,20 +29,66 @@ export function Recommendation({
     <div className="page recommendation">
       <h2>What to wear</h2>
 
-      <div className="clothing-section">
-        <h3>Main kit</h3>
-        <ul>
-          {recommendation.mainKit.map((item, idx) => (
-            <li key={idx}>{item}</li>
-          ))}
-        </ul>
-      </div>
-
-      {recommendation.accessories.length > 0 && (
+      {recommendation.head.length > 0 && (
         <div className="clothing-section">
-          <h3>Accessories</h3>
+          <h3>Head</h3>
           <ul>
-            {recommendation.accessories.map((item, idx) => (
+            {recommendation.head.map((item, idx) => (
+              <li key={idx}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {recommendation.neckFace.length > 0 && (
+        <div className="clothing-section">
+          <h3>Neck / Face</h3>
+          <ul>
+            {recommendation.neckFace.map((item, idx) => (
+              <li key={idx}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {recommendation.chest.length > 0 && (
+        <div className="clothing-section">
+          <h3>Chest</h3>
+          <ul>
+            {recommendation.chest.map((item, idx) => (
+              <li key={idx}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {recommendation.legs.length > 0 && (
+        <div className="clothing-section">
+          <h3>Legs</h3>
+          <ul>
+            {recommendation.legs.map((item, idx) => (
+              <li key={idx}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {recommendation.hands.length > 0 && (
+        <div className="clothing-section">
+          <h3>Hands</h3>
+          <ul>
+            {recommendation.hands.map((item, idx) => (
+              <li key={idx}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {recommendation.feet.length > 0 && (
+        <div className="clothing-section">
+          <h3>Feet</h3>
+          <ul>
+            {recommendation.feet.map((item, idx) => (
               <li key={idx}>{item}</li>
             ))}
           </ul>

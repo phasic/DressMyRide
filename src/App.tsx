@@ -5,6 +5,7 @@ import { RideSetup } from './pages/RideSetup';
 import { Recommendation } from './pages/Recommendation';
 import { Settings } from './pages/Settings';
 import { ManualLocation } from './pages/ManualLocation';
+import { ClothingGuide } from './pages/ClothingGuide';
 import { fetchWeatherForecast } from './services/weatherService';
 import { recommendClothing } from './logic/clothingEngine';
 import './App.css';
@@ -57,13 +58,23 @@ function App() {
     <div className="app">
       <header>
         <h1>DressMyRide</h1>
-        <button
-          className="btn-icon"
-          onClick={() => setPage(page === 'settings' ? 'home' : 'settings')}
-          aria-label="Settings"
-        >
-          ⚙️
-        </button>
+        <div className="header-actions">
+          <button
+            className="btn-icon"
+            onClick={() => setPage(page === 'guide' ? 'home' : 'guide')}
+            aria-label="Clothing Guide"
+            title="Clothing Guide"
+          >
+            📖
+          </button>
+          <button
+            className="btn-icon"
+            onClick={() => setPage(page === 'settings' ? 'home' : 'settings')}
+            aria-label="Settings"
+          >
+            ⚙️
+          </button>
+        </div>
       </header>
 
       <main>
@@ -119,6 +130,10 @@ function App() {
 
         {!loading && page === 'settings' && (
           <Settings onBack={() => setPage('home')} />
+        )}
+
+        {!loading && page === 'guide' && (
+          <ClothingGuide onBack={() => setPage('home')} />
         )}
       </main>
     </div>
