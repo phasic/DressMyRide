@@ -18,6 +18,60 @@
   --border-radius: 0.5rem;
 }
 
+/* Dark mode support - class-based for manual control */
+/* System preference (when no class is set) */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light):not(.dark) {
+    --primary-color: #3b82f6;
+    --primary-hover: #2563eb;
+    --secondary-color: #9ca3af;
+    --secondary-hover: #6b7280;
+    --bg-color: #1f2937;
+    --text-color: #f9fafb;
+    --border-color: #374151;
+    --error-color: #ef4444;
+    --success-color: #22c55e;
+  }
+
+  :root:not(.light):not(.dark) body {
+    background-color: #111827;
+  }
+}
+
+/* Explicit dark class override */
+:root.dark {
+  --primary-color: #3b82f6;
+  --primary-hover: #2563eb;
+  --secondary-color: #9ca3af;
+  --secondary-hover: #6b7280;
+  --bg-color: #1f2937;
+  --text-color: #f9fafb;
+  --border-color: #374151;
+  --error-color: #ef4444;
+  --success-color: #22c55e;
+}
+
+:root.dark body {
+  background-color: #111827;
+}
+
+/* Explicit light class override */
+:root.light {
+  --primary-color: #2563eb;
+  --primary-hover: #1d4ed8;
+  --secondary-color: #6b7280;
+  --secondary-hover: #4b5563;
+  --bg-color: #ffffff;
+  --text-color: #111827;
+  --border-color: #e5e7eb;
+  --error-color: #dc2626;
+  --success-color: #16a34a;
+}
+
+:root.light body {
+  background-color: #f9fafb;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
@@ -186,7 +240,7 @@ main {
 .form-group select:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
 .form-group small {
@@ -216,16 +270,17 @@ main {
 }
 
 .error {
-  background-color: #fee2e2;
+  background-color: rgba(220, 38, 38, 0.1);
   color: var(--error-color);
   padding: var(--spacing);
   border-radius: var(--border-radius);
   margin-top: var(--spacing);
   font-size: 0.9rem;
+  border: 1px solid rgba(220, 38, 38, 0.2);
 }
 
 .error-banner {
-  background-color: #fee2e2;
+  background-color: rgba(220, 38, 38, 0.1);
   color: var(--error-color);
   padding: var(--spacing);
   border-radius: var(--border-radius);
@@ -233,6 +288,7 @@ main {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border: 1px solid rgba(220, 38, 38, 0.2);
 }
 
 .error-banner button {
@@ -250,13 +306,14 @@ main {
 }
 
 .success {
-  background-color: #dcfce7;
+  background-color: rgba(34, 197, 94, 0.1);
   color: var(--success-color);
   padding: var(--spacing);
   border-radius: var(--border-radius);
   margin-top: var(--spacing);
   font-size: 0.9rem;
   text-align: center;
+  border: 1px solid rgba(34, 197, 94, 0.2);
 }
 
 .loading {

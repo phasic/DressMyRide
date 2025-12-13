@@ -125,18 +125,35 @@
 }
 
 .condition-badge.temp {
-  background-color: #fee2e2;
-  color: #991b1b;
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
 }
 
 .condition-badge.wind {
-  background-color: #dbeafe;
-  color: #1e40af;
+  background-color: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
 }
 
 .condition-badge.rain {
-  background-color: #e0e7ff;
-  color: #3730a3;
+  background-color: rgba(99, 102, 241, 0.2);
+  color: #6366f1;
+}
+
+@media (prefers-color-scheme: dark) {
+  .condition-badge.temp {
+    background-color: rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+  }
+
+  .condition-badge.wind {
+    background-color: rgba(59, 130, 246, 0.3);
+    color: #93c5fd;
+  }
+
+  .condition-badge.rain {
+    background-color: rgba(99, 102, 241, 0.3);
+    color: #a5b4fc;
+  }
 }
 
 .scenario-clothing {

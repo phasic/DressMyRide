@@ -5,6 +5,7 @@ const STORAGE_KEYS = {
   WEATHER_CACHE: 'dressmyride_weather_cache',
   UNITS: 'dressmyride_units',
   QUICK_VIEW: 'dressmyride_quick_view',
+  THEME: 'dressmyride_theme',
 } as const;
 
 export const storage = {
@@ -58,8 +59,17 @@ export const storage = {
     return value === 'true';
   },
 
-  setQuickView: (enabled: boolean): void => {
-    localStorage.setItem(STORAGE_KEYS.QUICK_VIEW, enabled ? 'true' : 'false');
-  },
-};
+      setQuickView: (enabled: boolean): void => {
+        localStorage.setItem(STORAGE_KEYS.QUICK_VIEW, enabled ? 'true' : 'false');
+      },
+
+      getTheme: (): 'light' | 'dark' | 'system' => {
+        const theme = localStorage.getItem(STORAGE_KEYS.THEME);
+        return (theme === 'light' || theme === 'dark' || theme === 'system' ? theme : 'system') as 'light' | 'dark' | 'system';
+      },
+
+      setTheme: (theme: 'light' | 'dark' | 'system'): void => {
+        localStorage.setItem(STORAGE_KEYS.THEME, theme);
+      },
+    };
 

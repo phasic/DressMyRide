@@ -125,8 +125,8 @@
 .dev-tools-status {
   margin-top: 1rem;
   padding: 0.75rem;
-  background-color: #fef3c7;
-  border: 1px solid #fbbf24;
+  background-color: rgba(251, 191, 36, 0.2);
+  border: 1px solid rgba(251, 191, 36, 0.4);
   border-radius: var(--border-radius);
   font-size: 0.875rem;
 }
@@ -134,13 +134,24 @@
 .dev-tools-status strong {
   display: block;
   margin-bottom: 0.25rem;
-  color: #92400e;
+  color: #fbbf24;
 }
 
 .dev-tools-status p {
   margin: 0;
-  color: #78350f;
+  color: var(--secondary-color);
   font-size: 0.8rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dev-tools-status {
+    background-color: rgba(251, 191, 36, 0.15);
+    border-color: rgba(251, 191, 36, 0.3);
+  }
+
+  .dev-tools-status strong {
+    color: #fcd34d;
+  }
 }
 
 @media (max-width: 768px) {

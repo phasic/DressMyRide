@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Page, Location, RideConfig, WeatherSummary, ClothingRecommendation } from './types';
 import { Home } from './pages/Home';
 import { RideSetup } from './pages/RideSetup';
@@ -9,6 +9,7 @@ import { ClothingGuide } from './pages/ClothingGuide';
 import { DevTools } from './components/DevTools';
 import { fetchWeatherForecast } from './services/weatherService';
 import { recommendClothing } from './logic/clothingEngine';
+import { storage } from './utils/storage';
 import './App.css';
 
 function App() {
@@ -20,6 +21,32 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [weatherOverride, setWeatherOverride] = useState<Partial<WeatherSummary> | null>(null);
+
+  // Initialize theme on app load
+  useEffect(() => {
+    const theme = storage.getTheme();
+    const root = document.documentElement;
+    
+    if (theme === 'system') {
+      // Use system preference
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      root.classList.toggle('dark', prefersDark);
+      root.classList.remove('light');
+      
+      // Listen for system theme changes
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleChange = (e: MediaQueryListEvent) => {
+        root.classList.toggle('dark', e.matches);
+        root.classList.remove('light');
+      };
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    } else {
+      // Use manual selection
+      root.classList.remove('dark', 'light');
+      root.classList.add(theme);
+    }
+  }, []);
 
   const handleLocationFound = (loc: Location) => {
     setLocation(loc);
