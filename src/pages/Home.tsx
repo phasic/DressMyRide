@@ -285,7 +285,16 @@ export function Home({ onQuickRecommendation, weatherOverride }: HomeProps) {
           )}
           <div className="quick-view-header">
             <div className="quick-weather-badges">
-              <div className="quick-weather-badge">
+              <div 
+                className="quick-weather-badge" 
+                onClick={() => {
+                  const rideDetailsElement = document.getElementById('ride-details');
+                  if (rideDetailsElement) {
+                    rideDetailsElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }}
+                style={{ cursor: 'pointer' }}
+              >
                 <div className="badge-label">
                   <img 
                     src={`${import.meta.env.BASE_URL}palm.png`} 
@@ -293,7 +302,7 @@ export function Home({ onQuickRecommendation, weatherOverride }: HomeProps) {
                     className="badge-icon"
                   />
                 </div>
-              <div className="badge-value">
+                <div className="badge-value">
                 {Math.round(quickViewData.weather.minFeelsLike) === Math.round(quickViewData.weather.maxFeelsLike) ? (
                   <>
                     {Math.round(quickViewData.weather.minFeelsLike)}<span className="badge-unit">{tempUnit}</span>
@@ -305,7 +314,16 @@ export function Home({ onQuickRecommendation, weatherOverride }: HomeProps) {
                 )}
               </div>
               </div>
-              <div className="quick-weather-badge">
+              <div 
+                className="quick-weather-badge"
+                onClick={() => {
+                  const rideDetailsElement = document.getElementById('ride-details');
+                  if (rideDetailsElement) {
+                    rideDetailsElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }}
+                style={{ cursor: 'pointer' }}
+              >
                 <div className="badge-label">
                   <img 
                     src={`${import.meta.env.BASE_URL}temperature.png`} 
@@ -325,7 +343,16 @@ export function Home({ onQuickRecommendation, weatherOverride }: HomeProps) {
                 )}
               </div>
               </div>
-              <div className="quick-weather-badge">
+              <div 
+                className="quick-weather-badge"
+                onClick={() => {
+                  const rideDetailsElement = document.getElementById('ride-details');
+                  if (rideDetailsElement) {
+                    rideDetailsElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }}
+                style={{ cursor: 'pointer' }}
+              >
                 <div className="badge-label">
                   <img 
                     src={`${import.meta.env.BASE_URL}windy.png`} 
@@ -338,7 +365,16 @@ export function Home({ onQuickRecommendation, weatherOverride }: HomeProps) {
                   {Math.round(quickViewData.weather.maxWindSpeed)}<span className="badge-unit"> {windUnit}</span>
                 </div>
               </div>
-              <div className="quick-weather-badge">
+              <div 
+                className="quick-weather-badge"
+                onClick={() => {
+                  const rideDetailsElement = document.getElementById('ride-details');
+                  if (rideDetailsElement) {
+                    rideDetailsElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }}
+                style={{ cursor: 'pointer' }}
+              >
                 <div className="badge-label">
                   <img 
                     src={`${import.meta.env.BASE_URL}rainy.png`} 
@@ -454,7 +490,7 @@ export function Home({ onQuickRecommendation, weatherOverride }: HomeProps) {
             )}
           </div>
 
-          <div className="weather-summary">
+          <div className="weather-summary" id="ride-details" style={{ scrollMarginTop: '20px' }}>
             <h3>Ride details</h3>
             <div className="weather-grid">
               <div className="weather-item">
@@ -486,7 +522,7 @@ export function Home({ onQuickRecommendation, weatherOverride }: HomeProps) {
               </div>
             </div>
             {quickViewData.weather.hourly && quickViewData.weather.hourly.length > 0 && (
-              <div style={{ marginTop: '24px' }}>
+              <div id="weather-chart" style={{ marginTop: '24px', scrollMarginTop: '20px' }}>
                 <h4 style={{ marginBottom: '16px', fontSize: '16px', fontWeight: 600 }}>Weather Evolution</h4>
                 <WeatherChart weather={quickViewData.weather} config={quickViewData.config} />
               </div>

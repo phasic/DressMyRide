@@ -67,7 +67,16 @@ export function Recommendation({
                 )}
               </div>
             </div>
-            <div className="quick-weather-badge">
+            <div 
+              className="quick-weather-badge"
+                onClick={() => {
+                  const rideDetailsElement = document.getElementById('ride-details');
+                  if (rideDetailsElement) {
+                    rideDetailsElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }}
+              style={{ cursor: 'pointer' }}
+            >
               <div className="badge-label">
                 <img 
                   src={`${import.meta.env.BASE_URL}temperature.png`} 
@@ -87,7 +96,16 @@ export function Recommendation({
                 )}
               </div>
             </div>
-            <div className="quick-weather-badge">
+            <div 
+              className="quick-weather-badge"
+                onClick={() => {
+                  const rideDetailsElement = document.getElementById('ride-details');
+                  if (rideDetailsElement) {
+                    rideDetailsElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }}
+              style={{ cursor: 'pointer' }}
+            >
               <div className="badge-label">
                 <img 
                   src={`${import.meta.env.BASE_URL}windy.png`} 
@@ -100,7 +118,16 @@ export function Recommendation({
                 {Math.round(weather.maxWindSpeed)}<span className="badge-unit"> {windUnit}</span>
               </div>
             </div>
-            <div className="quick-weather-badge">
+            <div 
+              className="quick-weather-badge"
+                onClick={() => {
+                  const rideDetailsElement = document.getElementById('ride-details');
+                  if (rideDetailsElement) {
+                    rideDetailsElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }}
+              style={{ cursor: 'pointer' }}
+            >
               <div className="badge-label">
                 <img 
                   src={`${import.meta.env.BASE_URL}rainy.png`} 
@@ -210,7 +237,7 @@ export function Recommendation({
           )}
         </div>
 
-        <div className="weather-summary">
+        <div className="weather-summary" id="ride-details">
           <h3>Ride details</h3>
           <div className="weather-grid">
             <div className="weather-item">
@@ -233,7 +260,7 @@ export function Recommendation({
             </div>
           </div>
           {weather.hourly && weather.hourly.length > 0 && (
-            <div style={{ marginTop: '24px' }}>
+            <div id="weather-chart" style={{ marginTop: '24px', scrollMarginTop: '20px' }}>
               <h4 style={{ marginBottom: '16px', fontSize: '16px', fontWeight: 600 }}>Weather Evolution</h4>
               <WeatherChart weather={weather} config={config} />
             </div>
