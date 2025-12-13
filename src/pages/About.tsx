@@ -32,6 +32,26 @@ export function About({ onBack }: AboutProps) {
           </div>
 
           <div className="attribution-item">
+            <div className="attribution-title">Map Library</div>
+            <div className="attribution-details">
+              <a href="https://leafletjs.com" target="_blank" rel="noopener noreferrer">
+                Leaflet
+              </a>
+              <span className="attribution-note">Open source JavaScript library for mobile-friendly interactive maps</span>
+            </div>
+          </div>
+
+          <div className="attribution-item">
+            <div className="attribution-title">Map Data</div>
+            <div className="attribution-details">
+              <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">
+                © OpenStreetMap contributors
+              </a>
+              <span className="attribution-note">Map tiles and geocoding data</span>
+            </div>
+          </div>
+
+          <div className="attribution-item">
             <div className="attribution-title">Icons & Assets</div>
             <div className="attribution-details">
               <a href="https://www.flaticon.com/free-icons/refresh" target="_blank" rel="noopener noreferrer">
