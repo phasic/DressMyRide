@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { recommendClothing } from '../logic/clothingEngine';
 import { WeatherSummary, RideConfig } from '../types';
+import { storage } from '../utils/storage';
 import './ClothingGuide.css';
 
 interface GuideProps {
@@ -8,7 +9,7 @@ interface GuideProps {
 }
 
 export function ClothingGuide({}: GuideProps) {
-  const [units, setUnits] = useState<'metric' | 'imperial'>('metric');
+  const [units, setUnits] = useState<'metric' | 'imperial'>(storage.getUnits());
   const [openSections, setOpenSections] = useState<{
     uniqueItems: boolean;
     temperature: boolean;
@@ -20,6 +21,11 @@ export function ClothingGuide({}: GuideProps) {
     wind: false,
     rain: false,
   });
+
+  // Update units when global settings change
+  useEffect(() => {
+    setUnits(storage.getUnits());
+  }, []);
 
   const toggleSection = (section: 'uniqueItems' | 'temperature' | 'wind' | 'rain') => {
     setOpenSections(prev => ({
@@ -385,15 +391,6 @@ export function ClothingGuide({}: GuideProps) {
     <div className="page clothing-guide">
       <div className="guide-header">
         <h2>Wardrobe</h2>
-        <div className="guide-controls">
-          <label>
-            Units:
-            <select value={units} onChange={(e) => setUnits(e.target.value as 'metric' | 'imperial')}>
-              <option value="metric">°C / km/h</option>
-              <option value="imperial">°F / mph</option>
-            </select>
-          </label>
-        </div>
       </div>
 
       <p className="guide-intro">

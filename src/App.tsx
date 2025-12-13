@@ -94,7 +94,7 @@ function App() {
   };
 
   const handleNewRecommendation = () => {
-    setPage('home');
+    setPage('setup');
     setLocation(null);
     setConfig(null);
     setWeather(null);

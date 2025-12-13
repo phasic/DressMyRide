@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { RideConfig, Location } from '../types';
 import { storage } from '../utils/storage';
 import { geocodeCity } from '../services/weatherService';
+import { MapPicker } from '../components/MapPicker';
 
 interface RideSetupProps {
   onContinue: (location: Location, config: RideConfig) => void;
@@ -9,7 +10,9 @@ interface RideSetupProps {
 
 export function RideSetup({ onContinue }: RideSetupProps) {
   const [locationType, setLocationType] = useState<'current' | 'city'>('current');
+  const [cityInputType, setCityInputType] = useState<'search' | 'map'>('search');
   const [city, setCity] = useState('');
+  const [mapLocation, setMapLocation] = useState<Location | null>(null);
   const [startTime, setStartTime] = useState(() => {
     const now = new Date();
     now.setMinutes(0);
@@ -44,11 +47,19 @@ export function RideSetup({ onContinue }: RideSetupProps) {
           lon: position.coords.longitude,
         };
       } else {
-        // Geocode city
-        if (!city.trim()) {
-          throw new Error('Please enter a city name');
+        // City input - either search or map
+        if (cityInputType === 'map') {
+          if (!mapLocation) {
+            throw new Error('Please select a location on the map');
+          }
+          location = mapLocation;
+        } else {
+          // Search by name
+          if (!city.trim()) {
+            throw new Error('Please enter a city name');
+          }
+          location = await geocodeCity(city);
         }
-        location = await geocodeCity(city);
       }
 
       const start = new Date(startTime);
@@ -72,37 +83,74 @@ export function RideSetup({ onContinue }: RideSetupProps) {
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label>Location</label>
-          <div style={{ display: 'flex', gap: '12px', marginBottom: '8px' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-              <input
-                type="radio"
-                name="locationType"
-                value="current"
-                checked={locationType === 'current'}
-                onChange={(e) => setLocationType(e.target.value as 'current' | 'city')}
-              />
-              <span>Use current location</span>
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-              <input
-                type="radio"
-                name="locationType"
-                value="city"
-                checked={locationType === 'city'}
-                onChange={(e) => setLocationType(e.target.value as 'current' | 'city')}
-              />
-              <span>Enter city</span>
-            </label>
+          <div className="location-selector">
+            <button
+              type="button"
+              className={`location-option ${locationType === 'current' ? 'active' : ''}`}
+              onClick={() => setLocationType('current')}
+            >
+              <div className="location-option-icon">📍</div>
+              <div className="location-option-content">
+                <div className="location-option-title">Use current location</div>
+                <div className="location-option-subtitle">GPS coordinates</div>
+              </div>
+              <div className="location-option-check">
+                {locationType === 'current' && '✓'}
+              </div>
+            </button>
+            <button
+              type="button"
+              className={`location-option ${locationType === 'city' ? 'active' : ''}`}
+              onClick={() => setLocationType('city')}
+            >
+              <div className="location-option-icon">🏙️</div>
+              <div className="location-option-content">
+                <div className="location-option-title">Enter city</div>
+                <div className="location-option-subtitle">Search by name</div>
+              </div>
+              <div className="location-option-check">
+                {locationType === 'city' && '✓'}
+              </div>
+            </button>
           </div>
           {locationType === 'city' && (
-            <input
-              type="text"
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              placeholder="e.g., London, New York"
-              required={locationType === 'city'}
-              style={{ marginTop: '8px' }}
-            />
+            <div className="city-input-options" style={{ marginTop: '12px' }}>
+              <div className="city-input-tabs">
+                <button
+                  type="button"
+                  className={`city-input-tab ${cityInputType === 'search' ? 'active' : ''}`}
+                  onClick={() => setCityInputType('search')}
+                >
+                  Search by name
+                </button>
+                <button
+                  type="button"
+                  className={`city-input-tab ${cityInputType === 'map' ? 'active' : ''}`}
+                  onClick={() => setCityInputType('map')}
+                >
+                  Select on map
+                </button>
+              </div>
+              {cityInputType === 'search' ? (
+                <input
+                  type="text"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="e.g., London, New York"
+                  required={locationType === 'city' && cityInputType === 'search'}
+                  style={{ marginTop: '12px' }}
+                />
+              ) : (
+                <div style={{ marginTop: '12px' }}>
+                  <MapPicker
+                    onLocationSelect={(location) => {
+                      setMapLocation(location);
+                      setError(null); // Clear any previous errors when location is selected
+                    }}
+                  />
+                </div>
+              )}
+            </div>
           )}
         </div>
 
