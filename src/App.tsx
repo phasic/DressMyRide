@@ -88,8 +88,8 @@ function App() {
     <div className="app">
       <header>
         <div className="header-title">
-          <img src={`${import.meta.env.BASE_URL}pwa-192x192.png`} alt="DressMyRide" className="header-icon" />
-          <h1>DressMyRide</h1>
+          <img src={`${import.meta.env.BASE_URL}pwa-192x192.png`} alt="Dress My Ride" className="header-icon" />
+          <h1>Dress My Ride</h1>
         </div>
         <div className="header-actions">
           <DevTools onWeatherOverride={setWeatherOverride} />
