@@ -15,6 +15,7 @@ export function generateDemoWeather(): WeatherSummary {
   // Feels like is usually 1-5 degrees colder, especially with wind
   const feelsLikeOffset = -1 - Math.random() * 4;
   const minFeelsLike = baseTemp + feelsLikeOffset;
+  const maxFeelsLike = maxTemp + feelsLikeOffset;
   
   // Wind speed between 5-40 km/h
   const maxWindSpeed = 5 + Math.random() * 35;
@@ -31,6 +32,7 @@ export function generateDemoWeather(): WeatherSummary {
     minTemp: Math.round(minTemp * 10) / 10,
     maxTemp: Math.round(maxTemp * 10) / 10,
     minFeelsLike: Math.round(minFeelsLike * 10) / 10,
+    maxFeelsLike: Math.round(maxFeelsLike * 10) / 10,
     maxWindSpeed: Math.round(maxWindSpeed * 10) / 10,
     maxRainProbability,
     maxPrecipitationIntensity: Math.round(maxPrecipitationIntensity * 10) / 10,

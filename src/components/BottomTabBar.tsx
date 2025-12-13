@@ -30,13 +30,13 @@ export function BottomTabBar({ currentPage, onHome, onCustom, onGuide, customLoa
         <span className="ios-tab-label">Quick view</span>
       </button>
       <button
-        className={`ios-tab-item ${currentPage === 'setup' ? 'active' : ''}`}
+        className={`ios-tab-item ${(currentPage === 'setup' || currentPage === 'recommendation') ? 'active' : ''}`}
         onClick={onCustom}
         disabled={customLoading}
       >
         <div 
           className="ios-tab-icon-wrapper"
-          style={currentPage === 'setup' ? {
+          style={(currentPage === 'setup' || currentPage === 'recommendation') ? {
             '--icon-mask-url': `url(${import.meta.env.BASE_URL}equalizer.png)`
           } as React.CSSProperties : undefined}
         >

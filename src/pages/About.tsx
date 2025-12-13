@@ -52,6 +52,18 @@ export function About({ onBack }: AboutProps) {
               <a href="https://www.flaticon.com/free-icons/installer" target="_blank" rel="noopener noreferrer">
                 Installer icons created by Abdul-Aziz - Flaticon
               </a>
+              <a href="https://www.flaticon.com/free-icons/open-hands" target="_blank" rel="noopener noreferrer">
+                Open hands icons created by Icon Mart - Flaticon
+              </a>
+              <a href="https://www.flaticon.com/free-icons/temperature" target="_blank" rel="noopener noreferrer">
+                Temperature icons created by Freepik - Flaticon
+              </a>
+              <a href="https://www.flaticon.com/free-icons/wind-speed" target="_blank" rel="noopener noreferrer">
+                Wind speed icons created by Nendra Wahyu - Flaticon
+              </a>
+              <a href="https://www.flaticon.com/free-icons/rain" target="_blank" rel="noopener noreferrer">
+                Rain icons created by bqlqn - Flaticon
+              </a>
             </div>
           </div>
 

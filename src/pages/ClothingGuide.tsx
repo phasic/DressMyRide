@@ -50,6 +50,7 @@ export function ClothingGuide({}: GuideProps) {
         minTemp: temp,
         maxTemp: temp + 2,
         minFeelsLike: temp,
+        maxFeelsLike: temp + 2,
         maxWindSpeed: 10, // Low wind
         maxRainProbability: 0, // No rain
         maxPrecipitationIntensity: 0,
@@ -85,6 +86,7 @@ export function ClothingGuide({}: GuideProps) {
         minTemp: 10,
         maxTemp: 12,
         minFeelsLike: 10,
+        maxFeelsLike: 12,
         maxWindSpeed: wind,
         maxRainProbability: 0, // No rain
         maxPrecipitationIntensity: 0,
@@ -153,6 +155,7 @@ export function ClothingGuide({}: GuideProps) {
         minTemp: 10,
         maxTemp: 12,
         minFeelsLike: 10,
+        maxFeelsLike: 12,
         maxWindSpeed: 10, // Low wind
         maxRainProbability: rain,
         maxPrecipitationIntensity: rain > 0.5 ? 2 : 0,

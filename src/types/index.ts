@@ -25,6 +25,7 @@ export interface WeatherSummary {
   minTemp: number;
   maxTemp: number;
   minFeelsLike: number;
+  maxFeelsLike: number;
   maxWindSpeed: number;
   maxRainProbability: number;
   maxPrecipitationIntensity: number;

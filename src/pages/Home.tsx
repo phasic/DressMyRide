@@ -287,13 +287,66 @@ export function Home({ onQuickRecommendation, weatherOverride }: HomeProps) {
             </div>
           )}
           <div className="quick-view-header">
-            <div>
-              <h2>What to wear</h2>
+            <div className="quick-weather-badges">
+              <div className="quick-weather-badge">
+                <div className="badge-label">
+                  <img 
+                    src={`${import.meta.env.BASE_URL}palm.png`} 
+                    alt="Feels like" 
+                    className="badge-icon"
+                  />
+                </div>
+                <div className="badge-value">
+                  {Math.round(quickViewData.weather.minFeelsLike)}
+                  <span className="badge-unit">{tempUnit}</span>
+                </div>
+              </div>
+              <div className="quick-weather-badge">
+                <div className="badge-label">
+                  <img 
+                    src={`${import.meta.env.BASE_URL}temperature.png`} 
+                    alt="Temperature" 
+                    className="badge-icon"
+                  />
+                </div>
+                <div className="badge-value">
+                  {Math.round(quickViewData.weather.minTemp)}<span className="badge-unit">{tempUnit}</span> <span className="badge-dash">-</span> {Math.round(quickViewData.weather.maxTemp)}<span className="badge-unit">{tempUnit}</span>
+                </div>
+              </div>
+              <div className="quick-weather-badge">
+                <div className="badge-label">
+                  <img 
+                    src={`${import.meta.env.BASE_URL}windy.png`} 
+                    alt="Wind" 
+                    className="badge-icon"
+                  />
+                </div>
+                <div className="badge-value">
+                  {Math.round(quickViewData.weather.maxWindSpeed)}<span className="badge-unit"> {windUnit}</span>
+                </div>
+              </div>
+              <div className="quick-weather-badge">
+                <div className="badge-label">
+                  <img 
+                    src={`${import.meta.env.BASE_URL}rainy.png`} 
+                    alt="Rain" 
+                    className="badge-icon"
+                  />
+                </div>
+                <div className="badge-value">{Math.round(quickViewData.weather.maxRainProbability * 100)}%</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="quick-clothing">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0 }}>What to wear</h3>
               <button
                 className="refresh-btn desktop-only"
                 onClick={loadQuickView}
                 disabled={quickViewLoading}
                 aria-label="Refresh"
+                style={{ margin: 0 }}
               >
                 <img 
                   src={`${import.meta.env.BASE_URL}refresh.png`} 
@@ -303,12 +356,6 @@ export function Home({ onQuickRecommendation, weatherOverride }: HomeProps) {
                 <span>Refresh</span>
               </button>
             </div>
-            <div className="quick-weather-badge">
-              {formatTemp(quickViewData.weather.minFeelsLike)}
-            </div>
-          </div>
-
-          <div className="quick-clothing">
             {quickViewData.recommendation.head.length > 0 && (
               <div className="quick-kit">
                 <h3>Head</h3>
@@ -392,30 +439,6 @@ export function Home({ onQuickRecommendation, weatherOverride }: HomeProps) {
                 </ul>
               </div>
             )}
-          </div>
-
-          <div className="weather-summary">
-            <h3>Weather summary</h3>
-            <div className="weather-grid">
-              <div className="weather-item">
-                <span className="label">Temperature:</span>
-                <span className="value">
-                  {formatTemp(quickViewData.weather.minTemp)} - {formatTemp(quickViewData.weather.maxTemp)}
-                </span>
-              </div>
-              <div className="weather-item">
-                <span className="label">Feels like:</span>
-                <span className="value">{formatTemp(quickViewData.weather.minFeelsLike)}</span>
-              </div>
-              <div className="weather-item">
-                <span className="label">Wind speed:</span>
-                <span className="value">{formatWind(quickViewData.weather.maxWindSpeed)}</span>
-              </div>
-              <div className="weather-item">
-                <span className="label">Rain probability:</span>
-                <span className="value">{Math.round(quickViewData.weather.maxRainProbability * 100)}%</span>
-              </div>
-            </div>
           </div>
 
           <div className="weather-summary">

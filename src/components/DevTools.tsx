@@ -49,6 +49,7 @@ export function DevTools({ onWeatherOverride }: DevToolsProps) {
       minTemp: 10,
       maxTemp: 12,
       minFeelsLike: 10,
+      maxFeelsLike: 12,
       maxWindSpeed: 10,
       maxRainProbability: 0,
       maxPrecipitationIntensity: 0,

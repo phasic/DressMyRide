@@ -64,6 +64,7 @@ export async function fetchWeatherForecast(
     minTemp: Math.min(...rideHours.map((h) => h.temp)),
     maxTemp: Math.max(...rideHours.map((h) => h.temp)),
     minFeelsLike: Math.min(...rideHours.map((h) => h.feels_like)),
+    maxFeelsLike: Math.max(...rideHours.map((h) => h.feels_like)),
     maxWindSpeed: Math.max(...rideHours.map((h) => h.wind_speed)),
     maxRainProbability: Math.max(...rideHours.map((h) => h.pop)),
     maxPrecipitationIntensity: Math.max(
