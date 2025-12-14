@@ -284,21 +284,23 @@ export function Settings({ onBack, onAbout, onShowInstallPrompt, onWeatherOverri
               </div>
             )}
 
-            <div className="form-group">
-              <div className="toggle-container">
-                <label htmlFor="disableInstallPrompt" className="toggle-label">Disable Weekly Reminder Install Prompt</label>
-                <label className="toggle-switch">
-                  <input
-                    id="disableInstallPrompt"
-                    type="checkbox"
-                    checked={disableInstallPrompt}
-                    onChange={(e) => setDisableInstallPrompt(e.target.checked)}
-                  />
-                  <span className="toggle-slider"></span>
-                </label>
+            {!isInstalled && (
+              <div className="form-group">
+                <div className="toggle-container">
+                  <label htmlFor="disableInstallPrompt" className="toggle-label">Disable Weekly Reminder Install Prompt</label>
+                  <label className="toggle-switch">
+                    <input
+                      id="disableInstallPrompt"
+                      type="checkbox"
+                      checked={disableInstallPrompt}
+                      onChange={(e) => setDisableInstallPrompt(e.target.checked)}
+                    />
+                    <span className="toggle-slider"></span>
+                  </label>
+                </div>
+                <small>Never show the weekly reminder install prompt to add this app to your home screen</small>
               </div>
-              <small>Never show the weekly reminder install prompt to add this app to your home screen</small>
-            </div>
+            )}
 
 
         <div className="settings-about-section">
