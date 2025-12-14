@@ -24,6 +24,7 @@ function App() {
     }
     return 'home';
   });
+  const [previousPage, setPreviousPage] = useState<Page | null>(null);
   const [location, setLocation] = useState<Location | null>(null);
   const [config, setConfig] = useState<RideConfig | null>(null);
   const [weather, setWeather] = useState<WeatherSummary | null>(null);
@@ -149,7 +150,13 @@ function App() {
         )}
         <button
           className="btn-icon floating-action"
-          onClick={() => setPage('settings')}
+          onClick={() => {
+            // Save current page before navigating to settings
+            if (page !== 'settings' && page !== 'about') {
+              setPreviousPage(page);
+            }
+            setPage('settings');
+          }}
           aria-label="Settings"
         >
           <img
@@ -178,7 +185,10 @@ function App() {
 
         {!loading && page === 'welcome' && (
           <Welcome
-            onGetStarted={() => setPage('settings')}
+            onGetStarted={() => {
+              setPreviousPage('home');
+              setPage('settings');
+            }}
             onTryDemo={() => setPage('home')}
           />
         )}
@@ -216,15 +226,26 @@ function App() {
 
         {!loading && page === 'settings' && (
           <Settings 
-            onBack={() => setPage('home')} 
-            onAbout={() => setPage('about')}
+            onBack={() => {
+              // Return to previous page if available, otherwise go to home
+              setPage(previousPage || 'home');
+              setPreviousPage(null);
+            }} 
+            onAbout={() => {
+              // Don't change previousPage - keep it so Settings can return to original page
+              setPage('about');
+            }}
             onShowInstallPrompt={setForceShowInstallPrompt}
             onWeatherOverride={setWeatherOverride}
           />
         )}
 
         {!loading && page === 'about' && (
-          <About onBack={() => setPage('settings')} />
+          <About onBack={() => {
+            // Always go back to settings since About is only accessible from Settings
+            // previousPage is preserved so Settings can return to the original page
+            setPage('settings');
+          }} />
         )}
 
         {!loading && page === 'wardrobes' && (

@@ -297,6 +297,26 @@ header h1 {
   }
 }
 
+/* Style SVG icons in floating-action buttons to match settings icon */
+.floating-action svg {
+  width: 20px;
+  height: 20px;
+  color: var(--text-color);
+  /* Ensure SVG stroke color matches text color for consistency */
+  stroke: currentColor;
+}
+
+/* In dark mode, ensure SVG is light like the settings icon */
+:root.dark .floating-action svg {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .floating-action svg {
+    color: rgba(255, 255, 255, 0.9);
+  }
+}
+
 main {
   flex: 1;
   padding: 0;
@@ -2014,6 +2034,20 @@ img.ios-tab-icon {
   border: 0.5px solid rgba(0, 122, 255, 0.3);
   box-shadow: 0 4px 16px rgba(0, 122, 255, 0.1);
   position: relative;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.current-wardrobe-card.clickable {
+  cursor: pointer;
+}
+
+.current-wardrobe-card.clickable:hover {
+  background-color: rgba(0, 122, 255, 0.25);
+  transform: scale(1.01);
+}
+
+.current-wardrobe-card.clickable:active {
+  transform: scale(0.99);
 }
 
 :root.dark .current-wardrobe-card {

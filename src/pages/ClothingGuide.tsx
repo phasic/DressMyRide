@@ -51,6 +51,7 @@ export function ClothingGuide({}: GuideProps) {
   const [editItemMaxTempRain, setEditItemMaxTempRain] = useState<string>('');
   const menuRef = useRef<HTMLDivElement>(null);
   const switcherRef = useRef<HTMLDivElement>(null);
+  const wardrobeCardRef = useRef<HTMLDivElement>(null);
   const [openSections, setOpenSections] = useState<{
     uniqueItems: boolean;
     temperature: boolean;
@@ -212,12 +213,24 @@ export function ClothingGuide({}: GuideProps) {
     return () => window.removeEventListener('toggleWardrobeEdit', handleToggleEdit);
   }, [isDefaultWardrobe, isEditMode]);
 
+  // Listen for add clothing button click
+  useEffect(() => {
+    const handleOpenAddClothing = () => {
+      if (!isDefaultWardrobe) {
+        setShowAddFirstClothingModal(true);
+      }
+    };
+
+    window.addEventListener('openAddClothing', handleOpenAddClothing);
+    return () => window.removeEventListener('openAddClothing', handleOpenAddClothing);
+  }, [isDefaultWardrobe]);
+
   // Calculate dropdown position when switcher opens
   useEffect(() => {
-    if (showWardrobeSwitcher && switcherRef.current) {
-      const rect = switcherRef.current.getBoundingClientRect();
+    if (showWardrobeSwitcher && wardrobeCardRef.current) {
+      const rect = wardrobeCardRef.current.getBoundingClientRect();
       setSwitcherPosition({
-        top: rect.bottom + 8,
+        top: rect.top,
         right: window.innerWidth - rect.right,
       });
     } else {
@@ -228,10 +241,15 @@ export function ClothingGuide({}: GuideProps) {
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (menuRef.current && !menuRef.current.contains(target)) {
         setShowMenu(false);
       }
-      if (switcherRef.current && !switcherRef.current.contains(event.target as Node)) {
+      // Check if click is outside both the card and the dropdown
+      const dropdown = document.querySelector('.wardrobe-switcher-dropdown');
+      const isOutsideCard = wardrobeCardRef.current && !wardrobeCardRef.current.contains(target);
+      const isOutsideDropdown = !dropdown || !dropdown.contains(target);
+      if (isOutsideCard && isOutsideDropdown) {
         setShowWardrobeSwitcher(false);
       }
     };
@@ -1265,75 +1283,84 @@ export function ClothingGuide({}: GuideProps) {
   };
 
   const tempScenarios = useMemo(() => generateTemperatureScenarios(), [units, currentWardrobe]);
-  const windScenarios = useMemo(() => generateWindScenarios(), [units]);
-  const rainScenarios = useMemo(() => generateRainScenarios(), [units]);
+  const windScenarios = useMemo(() => generateWindScenarios(), [units, currentWardrobe]);
+  const rainScenarios = useMemo(() => generateRainScenarios(), [units, currentWardrobe]);
   const tempUnit = units === 'metric' ? '°C' : '°F';
   const windUnit = units === 'metric' ? 'km/h' : 'mph';
 
-  // Helper function to get item type and temperature order
+  // Helper function to check if an item appears in a ClothingItem array
+  const itemInClothingItems = (itemName: string, clothingItems?: ClothingItem[]): boolean => {
+    if (!clothingItems) return false;
+    const itemLower = itemName.toLowerCase();
+    return clothingItems.some(item => {
+      if (typeof item === 'string') {
+        return item.toLowerCase() === itemLower;
+      } else if (typeof item === 'object' && item !== null && 'options' in item) {
+        return item.options.some(option => 
+          option.some(optItem => optItem.toLowerCase() === itemLower)
+        );
+      }
+      return false;
+    });
+  };
+
+  // Helper function to get item type and order from wardrobe structure
   const getItemOrder = (item: string): { type: 'temp' | 'wind' | 'rain', order: number } => {
-    const itemLower = item.toLowerCase();
-    
-    // Wind-related items
-    if (itemLower.includes('wind') || itemLower.includes('vest')) {
-      return { type: 'wind', order: 1000 };
-    }
-
-    // Rain-related items
-    if (itemLower.includes('rain') || itemLower.includes('waterproof')) {
-      return { type: 'rain', order: 2000 };
-    }
-
-    // Temperature-related items - order by when they first appear (hot to cold)
-    // Order based on temperature thresholds: >21, >15, >10, >7, >4, >1, >-1, >-4, <=-4
-    const tempOrderMap: { [key: string]: number } = {
-      // Hot (>21C)
-      'short-sleeve jersey': 1,
-      'shorts': 2,
-      // Warm (>15C)
-      'long-sleeve jersey': 10,
-      // Cool (>10C)
-      'heavy long-sleeve jersey': 20,
-      'lightweight long-sleeve jersey': 21,
-      'tights or leg warmers': 22,
-      'sleeveless or short-sleeve wicking undershirt': 23,
-      'long-sleeve undershirt': 24,
-      // Cold (>7C)
-      'headband covering ears': 30,
-      'long-sleeve wicking undershirt': 31,
-      'lined cycling jacket': 32,
-      'thin full-fingered gloves': 33,
-      'wool socks': 34,
-      'shoe covers': 35,
-      // Very cold (>4C)
-      'long-sleeve heavy mock turtleneck undershirt': 40,
-      'medium-weight gloves': 41,
-      'winter cycling shoes': 42,
-      // Freezing (>1C)
-      'long-sleeve heavy wicking turtleneck undershirt': 50,
-      'heavy cycling jacket': 51,
-      'heavyweight tights': 52,
-      'heavy-weight gloves': 53,
-      'wool socks with charcoal toe warmers': 54,
-      // Below freezing (>-1C)
-      'lined skullcap': 60,
-      // Extreme cold (>-4C)
-      'balaclava': 70,
-      'long-sleeve heavy wicking full turtleneck undershirt': 71,
-      'winter bib tights': 72,
-      'mittens or lobster claw gloves': 73,
-      'plastic bag': 74,
-      'charcoal toe warmers': 75,
-    };
-
-    // Find matching order
-    for (const [key, order] of Object.entries(tempOrderMap)) {
-      if (itemLower.includes(key.toLowerCase())) {
-        return { type: 'temp', order };
+    // Check wind modifiers first (ordered by wind speed, ascending)
+    for (let i = 0; i < currentWardrobe.windModifiers.length; i++) {
+      const modifier = currentWardrobe.windModifiers[i];
+      const allWindItems = [
+        ...(modifier.items.head || []),
+        ...(modifier.items.neckFace || []),
+        ...(modifier.items.chest || []),
+        ...(modifier.items.legs || []),
+        ...(modifier.items.hands || []),
+        ...(modifier.items.feet || []),
+      ];
+      if (itemInClothingItems(item, allWindItems)) {
+        // Order by wind speed threshold (lower wind speed = lower order number)
+        return { type: 'wind', order: 1000 + modifier.minWindSpeed };
       }
     }
 
-    // Default temperature item (fallback)
+    // Check rain modifiers (ordered by rain probability, ascending)
+    for (let i = 0; i < currentWardrobe.rainModifiers.length; i++) {
+      const modifier = currentWardrobe.rainModifiers[i];
+      const allRainItems = [
+        ...(modifier.items.head || []),
+        ...(modifier.items.neckFace || []),
+        ...(modifier.items.chest || []),
+        ...(modifier.items.legs || []),
+        ...(modifier.items.hands || []),
+        ...(modifier.items.feet || []),
+      ];
+      if (itemInClothingItems(item, allRainItems)) {
+        // Order by rain probability threshold (lower probability = lower order number)
+        return { type: 'rain', order: 2000 + modifier.minRainProbability * 10 };
+      }
+    }
+
+    // Check temperature ranges (ordered from hot to cold)
+    // Items that appear in earlier (hotter) ranges get lower order numbers
+    // Use the first (hottest) range where the item appears
+    for (let i = 0; i < currentWardrobe.temperatureRanges.length; i++) {
+      const range = currentWardrobe.temperatureRanges[i];
+      const allTempItems = [
+        ...(range.items.head || []),
+        ...(range.items.neckFace || []),
+        ...(range.items.chest || []),
+        ...(range.items.legs || []),
+        ...(range.items.hands || []),
+        ...(range.items.feet || []),
+      ];
+      if (itemInClothingItems(item, allTempItems)) {
+        // Use range index as order (earlier ranges = lower order = hotter)
+        // Temperature ranges are ordered from hot to cold, so index represents order
+        return { type: 'temp', order: i };
+      }
+    }
+
+    // Default fallback (shouldn't happen if item is from wardrobe)
     return { type: 'temp', order: 500 };
   };
 
@@ -1638,7 +1665,20 @@ export function ClothingGuide({}: GuideProps) {
 
       {/* Current Wardrobe Display */}
       <div className="current-wardrobe-section">
-        <div className="current-wardrobe-card">
+        <div 
+          className={`current-wardrobe-card ${hasMultipleWardrobes ? 'clickable' : ''}`}
+          ref={wardrobeCardRef}
+          onClick={(e) => {
+            // Only open switcher if clicking on the card itself, not on buttons
+            const target = e.target as HTMLElement;
+            const isMenuButton = menuRef.current?.contains(target);
+            const isSwitcherButton = switcherRef.current?.contains(target);
+            
+            if (!isMenuButton && !isSwitcherButton && hasMultipleWardrobes) {
+              setShowWardrobeSwitcher(!showWardrobeSwitcher);
+            }
+          }}
+        >
           <div className="current-wardrobe-info">
             <h3 className="current-wardrobe-name">{currentWardrobe.name}</h3>
             {isDefaultWardrobe && (
@@ -1651,7 +1691,10 @@ export function ClothingGuide({}: GuideProps) {
                 <button
                   type="button"
                   className="wardrobe-switcher-button"
-                  onClick={() => setShowWardrobeSwitcher(!showWardrobeSwitcher)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowWardrobeSwitcher(!showWardrobeSwitcher);
+                  }}
                   aria-label="Switch wardrobe"
                 >
                   <span className="switcher-icon">⇄</span>
@@ -1689,24 +1732,16 @@ export function ClothingGuide({}: GuideProps) {
               <button
                 type="button"
                 className="wardrobe-menu-button"
-                onClick={() => setShowMenu(!showMenu)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowMenu(!showMenu);
+                }}
                 aria-label="Wardrobe options"
               >
                 <span className="menu-dots">⋮</span>
               </button>
             {showMenu && (
               <div className="wardrobe-menu-dropdown">
-                <button
-                  type="button"
-                  className="menu-item"
-                  onClick={() => {
-                    setShowAddClothingModal(true);
-                    setShowMenu(false);
-                  }}
-                  disabled={isDefaultWardrobe}
-                >
-                  Add clothing piece
-                </button>
                 <button
                   type="button"
                   className="menu-item"
@@ -1745,7 +1780,7 @@ export function ClothingGuide({}: GuideProps) {
           <div className="empty-wardrobe-icon">👕</div>
           <h3 className="empty-wardrobe-title">Your wardrobe is empty</h3>
           <p className="empty-wardrobe-text">
-            Start adding clothes by clicking the menu button (⋮) next to your wardrobe name above, then select "Add clothing piece".
+            Start adding clothes by clicking the + button at the bottom of your screen.
           </p>
           <button
             className="btn btn-primary empty-wardrobe-button"
