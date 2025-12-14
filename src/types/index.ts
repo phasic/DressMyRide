@@ -43,13 +43,15 @@ export interface WeatherSummary {
   hourly?: WeatherHourlyData[]; // Optional hourly data for charts
 }
 
+export type ClothingItem = string | { options: string[][] };
+
 export interface ClothingRecommendation {
-  head: string[];
-  neckFace: string[];
-  chest: string[];
-  legs: string[];
-  hands: string[];
-  feet: string[];
+  head: ClothingItem[];
+  neckFace: ClothingItem[];
+  chest: ClothingItem[];
+  legs: ClothingItem[];
+  hands: ClothingItem[];
+  feet: ClothingItem[];
   explanation: string[];
 }
 

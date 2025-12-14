@@ -1,0 +1,149 @@
+{
+  "temperatureRanges": [
+    {
+      "minTemp": 21,
+      "items": {
+        "chest": ["Short-sleeve jersey"],
+        "legs": ["Shorts"]
+      },
+      "explanation": "Warm conditions - lightweight kit"
+    },
+    {
+      "minTemp": 15,
+      "maxTemp": 21,
+      "items": {
+        "chest": ["Long-sleeve jersey"],
+        "legs": ["Shorts"]
+      },
+      "explanation": "Moderate conditions - long sleeves for comfort"
+    },
+    {
+      "minTemp": 10,
+      "maxTemp": 15,
+      "items": {
+        "chest": [
+          {
+            "options": [
+              ["Heavy long-sleeve jersey", "Underneath: sleeveless OR short-sleeve wicking undershirt"],
+              ["Lightweight long-sleeve jersey", "Underneath: long-sleeve undershirt"]
+            ]
+          }
+        ],
+        "legs": ["Tights or leg warmers"]
+      },
+      "explanation": "Cool conditions - base layers and leg coverage needed"
+    },
+    {
+      "minTemp": 7,
+      "maxTemp": 10,
+      "items": {
+        "head": ["Headband covering ears"],
+        "chest": ["Long-sleeve wicking undershirt", "Lined cycling jacket"],
+        "legs": ["Tights or leg warmers"],
+        "hands": ["Thin full-fingered gloves"],
+        "feet": ["Wool socks", "Shoe covers"]
+      },
+      "explanation": "Cold conditions - full coverage with gloves and head protection"
+    },
+    {
+      "minTemp": 4,
+      "maxTemp": 7,
+      "items": {
+        "head": ["Headband covering ears"],
+        "chest": ["Long-sleeve heavy mock turtleneck undershirt", "Lined cycling jacket"],
+        "legs": ["Tights or leg warmers"],
+        "hands": ["Medium-weight gloves"],
+        "feet": ["Winter cycling shoes", "Shoe covers", "Wool socks"]
+      },
+      "explanation": "Very cold conditions - heavy base layers and winter gear"
+    },
+    {
+      "minTemp": 1,
+      "maxTemp": 4,
+      "items": {
+        "head": ["Headband covering ears"],
+        "chest": ["Long-sleeve heavy wicking turtleneck undershirt", "Heavy cycling jacket"],
+        "legs": ["Heavyweight tights"],
+        "hands": ["Heavy-weight gloves"],
+        "feet": ["Winter cycling shoes", "Shoe covers", "Wool socks with charcoal toe warmers"]
+      },
+      "explanation": "Very cold conditions - near freezing, maximum protection needed"
+    },
+    {
+      "minTemp": -1,
+      "maxTemp": 1,
+      "items": {
+        "head": ["Lined skullcap"],
+        "chest": ["Long-sleeve heavy wicking turtleneck undershirt", "Heavy cycling jacket"],
+        "legs": ["Heavyweight tights"],
+        "hands": ["Heavy-weight gloves"],
+        "feet": ["Winter cycling shoes", "Shoe covers", "Wool socks with charcoal toe warmers"]
+      },
+      "explanation": "Below freezing - skullcap for head protection"
+    },
+    {
+      "minTemp": -4,
+      "maxTemp": -1,
+      "items": {
+        "neckFace": ["Balaclava"],
+        "chest": [
+          "Long-sleeve heavy wicking full turtleneck undershirt",
+          "Long-sleeve jersey",
+          "Lined cycling jacket"
+        ],
+        "legs": ["Winter bib tights"],
+        "hands": ["Mittens or lobster claw gloves"],
+        "feet": ["Winter cycling shoes", "Wool socks", "Plastic bag", "Charcoal toe warmers"]
+      },
+      "explanation": "Extreme cold - maximum protection with balaclava and mittens"
+    },
+    {
+      "minTemp": null,
+      "maxTemp": -4,
+      "items": {
+        "neckFace": ["Balaclava"],
+        "chest": [
+          "Long-sleeve heavy wicking full turtleneck undershirt",
+          "Long-sleeve jersey",
+          "Lined cycling jacket"
+        ],
+        "legs": ["Winter bib tights"],
+        "hands": ["Mittens or lobster claw gloves"],
+        "feet": ["Winter cycling shoes", "Wool socks", "Plastic bag", "Charcoal toe warmers"]
+      },
+      "explanation": "Severe cold - full winter protection essential"
+    }
+  ],
+  "windModifiers": [
+    {
+      "minWindSpeed": 20,
+      "items": {
+        "chest": ["Wind vest"]
+      },
+      "explanation": "High wind conditions - wind protection needed"
+    }
+  ],
+  "rainModifiers": [
+    {
+      "minRainProbability": 70,
+      "maxTemp": 15,
+      "items": {
+        "chest": ["Waterproof jacket"]
+      },
+      "explanation": "Heavy rain expected - waterproof protection essential"
+    },
+    {
+      "minRainProbability": 40,
+      "maxRainProbability": 70,
+      "items": {
+        "chest": ["Rain jacket"]
+      },
+      "explanation": "Rain likely - rain protection recommended"
+    }
+  ],
+  "removableLayers": {
+    "maxStartTemp": 10,
+    "explanation": "Start temperature is cold - consider removable layers for warming up"
+  }
+}
+

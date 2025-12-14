@@ -23,8 +23,17 @@ export function Recommendation({
   const windUnit = isMetric ? 'km/h' : 'mph';
 
   // Helper function to determine item type
-  const getItemType = (item: string, weather: WeatherSummary, config: RideConfig): 'temp' | 'wind' | 'rain' => {
-    const itemLower = item.toLowerCase();
+  const getItemType = (item: string | { options: string[][] }, weather: WeatherSummary, config: RideConfig): 'temp' | 'wind' | 'rain' => {
+    // If it's an options object, check the first option's first item
+    if (typeof item === 'object' && item !== null && 'options' in item) {
+      const firstOptionFirstItem = item.options[0]?.[0];
+      if (firstOptionFirstItem) {
+        return getItemType(firstOptionFirstItem, weather, config);
+      }
+      return 'temp'; // Default if no items
+    }
+    
+    const itemLower = typeof item === 'string' ? item.toLowerCase() : '';
     const isMetric = config.units === 'metric';
     const wind = isMetric ? weather.maxWindSpeed : weather.maxWindSpeed * 1.60934;
 
@@ -55,11 +64,11 @@ export function Recommendation({
   };
 
   // Helper function to group items by type
-  const groupItemsByType = (items: string[], weather: WeatherSummary, config: RideConfig) => {
-    const grouped: { type: 'temp' | 'wind' | 'rain'; items: string[] }[] = [];
-    const tempItems: string[] = [];
-    const windItems: string[] = [];
-    const rainItems: string[] = [];
+  const groupItemsByType = (items: (string | { options: string[][] })[], weather: WeatherSummary, config: RideConfig) => {
+    const grouped: { type: 'temp' | 'wind' | 'rain'; items: (string | { options: string[][] })[] }[] = [];
+    const tempItems: (string | { options: string[][] })[] = [];
+    const windItems: (string | { options: string[][] })[] = [];
+    const rainItems: (string | { options: string[][] })[] = [];
 
     items.forEach(item => {
       const type = getItemType(item, weather, config);
@@ -208,9 +217,31 @@ export function Recommendation({
                     />
                   </div>
                   <ul className="item-group-list">
-                    {group.items.map((item, idx) => (
-                      <li key={idx}>{item}</li>
-                    ))}
+                    {group.items.map((item, idx) => {
+                      // Check if this is an options group
+                      if (typeof item === 'object' && item !== null && 'options' in item) {
+                        const options = (item as { options: string[][] }).options;
+                        return (
+                          <Fragment key={idx}>
+                            {options.map((optionItems, optionIdx) => (
+                              <Fragment key={optionIdx}>
+                                {optionIdx > 0 && (
+                                  <li key={`or-${optionIdx}`} className="option-divider">
+                                    <span className="option-or">OR</span>
+                                  </li>
+                                )}
+                                {optionItems.map((optionItem, itemIdx) => (
+                                  <li key={`${optionIdx}-${itemIdx}`} className={optionIdx > 0 ? "option-item" : ""}>
+                                    {optionItem}
+                                  </li>
+                                ))}
+                              </Fragment>
+                            ))}
+                          </Fragment>
+                        );
+                      }
+                      return <li key={idx}>{item}</li>;
+                    })}
                   </ul>
                 </div>
               ))}
@@ -230,9 +261,31 @@ export function Recommendation({
                     />
                   </div>
                   <ul className="item-group-list">
-                    {group.items.map((item, idx) => (
-                      <li key={idx}>{item}</li>
-                    ))}
+                    {group.items.map((item, idx) => {
+                      // Check if this is an options group
+                      if (typeof item === 'object' && item !== null && 'options' in item) {
+                        const options = (item as { options: string[][] }).options;
+                        return (
+                          <Fragment key={idx}>
+                            {options.map((optionItems, optionIdx) => (
+                              <Fragment key={optionIdx}>
+                                {optionIdx > 0 && (
+                                  <li key={`or-${optionIdx}`} className="option-divider">
+                                    <span className="option-or">OR</span>
+                                  </li>
+                                )}
+                                {optionItems.map((optionItem, itemIdx) => (
+                                  <li key={`${optionIdx}-${itemIdx}`} className={optionIdx > 0 ? "option-item" : ""}>
+                                    {optionItem}
+                                  </li>
+                                ))}
+                              </Fragment>
+                            ))}
+                          </Fragment>
+                        );
+                      }
+                      return <li key={idx}>{item}</li>;
+                    })}
                   </ul>
                 </div>
               ))}
@@ -252,9 +305,31 @@ export function Recommendation({
                     />
                   </div>
                   <ul className="item-group-list">
-                    {group.items.map((item, idx) => (
-                      <li key={idx}>{item}</li>
-                    ))}
+                    {group.items.map((item, idx) => {
+                      // Check if this is an options group
+                      if (typeof item === 'object' && item !== null && 'options' in item) {
+                        const options = (item as { options: string[][] }).options;
+                        return (
+                          <Fragment key={idx}>
+                            {options.map((optionItems, optionIdx) => (
+                              <Fragment key={optionIdx}>
+                                {optionIdx > 0 && (
+                                  <li key={`or-${optionIdx}`} className="option-divider">
+                                    <span className="option-or">OR</span>
+                                  </li>
+                                )}
+                                {optionItems.map((optionItem, itemIdx) => (
+                                  <li key={`${optionIdx}-${itemIdx}`} className={optionIdx > 0 ? "option-item" : ""}>
+                                    {optionItem}
+                                  </li>
+                                ))}
+                              </Fragment>
+                            ))}
+                          </Fragment>
+                        );
+                      }
+                      return <li key={idx}>{item}</li>;
+                    })}
                   </ul>
                 </div>
               ))}
@@ -274,9 +349,31 @@ export function Recommendation({
                     />
                   </div>
                   <ul className="item-group-list">
-                    {group.items.map((item, idx) => (
-                      <li key={idx}>{item}</li>
-                    ))}
+                    {group.items.map((item, idx) => {
+                      // Check if this is an options group
+                      if (typeof item === 'object' && item !== null && 'options' in item) {
+                        const options = (item as { options: string[][] }).options;
+                        return (
+                          <Fragment key={idx}>
+                            {options.map((optionItems, optionIdx) => (
+                              <Fragment key={optionIdx}>
+                                {optionIdx > 0 && (
+                                  <li key={`or-${optionIdx}`} className="option-divider">
+                                    <span className="option-or">OR</span>
+                                  </li>
+                                )}
+                                {optionItems.map((optionItem, itemIdx) => (
+                                  <li key={`${optionIdx}-${itemIdx}`} className={optionIdx > 0 ? "option-item" : ""}>
+                                    {optionItem}
+                                  </li>
+                                ))}
+                              </Fragment>
+                            ))}
+                          </Fragment>
+                        );
+                      }
+                      return <li key={idx}>{item}</li>;
+                    })}
                   </ul>
                 </div>
               ))}
@@ -296,9 +393,31 @@ export function Recommendation({
                     />
                   </div>
                   <ul className="item-group-list">
-                    {group.items.map((item, idx) => (
-                      <li key={idx}>{item}</li>
-                    ))}
+                    {group.items.map((item, idx) => {
+                      // Check if this is an options group
+                      if (typeof item === 'object' && item !== null && 'options' in item) {
+                        const options = (item as { options: string[][] }).options;
+                        return (
+                          <Fragment key={idx}>
+                            {options.map((optionItems, optionIdx) => (
+                              <Fragment key={optionIdx}>
+                                {optionIdx > 0 && (
+                                  <li key={`or-${optionIdx}`} className="option-divider">
+                                    <span className="option-or">OR</span>
+                                  </li>
+                                )}
+                                {optionItems.map((optionItem, itemIdx) => (
+                                  <li key={`${optionIdx}-${itemIdx}`} className={optionIdx > 0 ? "option-item" : ""}>
+                                    {optionItem}
+                                  </li>
+                                ))}
+                              </Fragment>
+                            ))}
+                          </Fragment>
+                        );
+                      }
+                      return <li key={idx}>{item}</li>;
+                    })}
                   </ul>
                 </div>
               ))}
@@ -318,9 +437,31 @@ export function Recommendation({
                     />
                   </div>
                   <ul className="item-group-list">
-                    {group.items.map((item, idx) => (
-                      <li key={idx}>{item}</li>
-                    ))}
+                    {group.items.map((item, idx) => {
+                      // Check if this is an options group
+                      if (typeof item === 'object' && item !== null && 'options' in item) {
+                        const options = (item as { options: string[][] }).options;
+                        return (
+                          <Fragment key={idx}>
+                            {options.map((optionItems, optionIdx) => (
+                              <Fragment key={optionIdx}>
+                                {optionIdx > 0 && (
+                                  <li key={`or-${optionIdx}`} className="option-divider">
+                                    <span className="option-or">OR</span>
+                                  </li>
+                                )}
+                                {optionItems.map((optionItem, itemIdx) => (
+                                  <li key={`${optionIdx}-${itemIdx}`} className={optionIdx > 0 ? "option-item" : ""}>
+                                    {optionItem}
+                                  </li>
+                                ))}
+                              </Fragment>
+                            ))}
+                          </Fragment>
+                        );
+                      }
+                      return <li key={idx}>{item}</li>;
+                    })}
                   </ul>
                 </div>
               ))}
