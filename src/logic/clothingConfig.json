@@ -1,117 +1,96 @@
 {
   "temperatureRanges": [
     {
+      "minTemp": 30,
+      "items": {
+        "chest": ["Ultra-light jersey"],
+        "legs": ["Ultra-light bib shorts"]
+      },
+      "explanation": "Very hot conditions - ultra-light kit"
+    },
+    {
       "minTemp": 21,
+      "maxTemp": 26,
+      "items": {
+        "chest": ["Mesh baselayer", "Short-sleeve jersey"],
+        "legs": ["Bib shorts"]
+      },
+      "explanation": "Hot conditions - mesh baselayer for ventilation"
+    },
+    {
+      "minTemp": 18,
+      "maxTemp": 21,
       "items": {
         "chest": ["Short-sleeve jersey"],
-        "legs": ["Shorts"]
+        "hands": ["Fingerless cycling gloves"],
+        "legs": ["Bib shorts"]
       },
-      "explanation": "Warm conditions - lightweight kit"
+      "explanation": "Warm conditions - fingerless gloves"
     },
     {
       "minTemp": 15,
-      "maxTemp": 21,
+      "maxTemp": 18,
       "items": {
-        "chest": ["Long-sleeve jersey"],
-        "legs": ["Shorts"]
+        "chest": ["Short-sleeve jersey", "Arm warmers"],
+        "legs": ["Bib shorts"]
       },
-      "explanation": "Moderate conditions - long sleeves for comfort"
+      "explanation": "Moderate-warm conditions - arm warmers for flexibility"
     },
     {
       "minTemp": 10,
       "maxTemp": 15,
       "items": {
-        "chest": [
+        "chest": ["Lightweight baselayer", "Non-thermal long-sleeve jersey", "Packable warm vest"],
+        "hands": ["Non-thermal full-finger gloves"],
+        "legs": [
           {
             "options": [
-              ["Heavy long-sleeve jersey", "Underneath: sleeveless OR short-sleeve wicking undershirt"],
-              ["Lightweight long-sleeve jersey", "Underneath: long-sleeve undershirt"]
+              ["Bib shorts", "Leg warmers"],
+              ["Lightweight non-insulated bib tights"]
+            ]
+          }
+        ]
+      },
+      "explanation": "Cool conditions - packable vest and leg warmers"
+    },
+    {
+      "minTemp": 5,
+      "maxTemp": 10,
+      "items": {
+        "neckFace": ["Thin neckwarmer (merino)"],
+        "chest": ["Baselayer", "Long-sleeve jersey (non-thermal)"],
+        "hands": ["Full-finger gloves (light insulation)"],
+        "legs": [
+          {
+            "options": [
+              ["Thermal bib tights"],
+              ["Insulated bib shorts", "Lined leg warmers"]
             ]
           }
         ],
-        "legs": ["Tights or leg warmers"]
+        "feet": ["Thin wool socks (merino)", "Neoprene shoe covers"]
       },
-      "explanation": "Cool conditions - base layers and leg coverage needed"
+      "explanation": "Cold conditions - thermal tights and merino accessories"
     },
     {
-      "minTemp": 7,
-      "maxTemp": 10,
-      "items": {
-        "head": ["Headband covering ears"],
-        "chest": ["Long-sleeve wicking undershirt", "Lined cycling jacket"],
-        "legs": ["Tights or leg warmers"],
-        "hands": ["Thin full-fingered gloves"],
-        "feet": ["Wool socks", "Shoe covers"]
-      },
-      "explanation": "Cold conditions - full coverage with gloves and head protection"
-    },
-    {
-      "minTemp": 4,
-      "maxTemp": 7,
-      "items": {
-        "head": ["Headband covering ears"],
-        "chest": ["Long-sleeve heavy mock turtleneck undershirt", "Lined cycling jacket"],
-        "legs": ["Tights or leg warmers"],
-        "hands": ["Medium-weight gloves"],
-        "feet": ["Winter cycling shoes", "Shoe covers", "Wool socks"]
-      },
-      "explanation": "Very cold conditions - heavy base layers and winter gear"
-    },
-    {
-      "minTemp": 1,
+      "minTemp": 0,
       "maxTemp": 4,
       "items": {
-        "head": ["Headband covering ears"],
-        "chest": ["Long-sleeve heavy wicking turtleneck undershirt", "Heavy cycling jacket"],
-        "legs": ["Heavyweight tights"],
-        "hands": ["Heavy-weight gloves"],
-        "feet": ["Winter cycling shoes", "Shoe covers", "Wool socks with charcoal toe warmers"]
+        "head": ["Skull cap (covers ears)"],
+        "neckFace": ["Thermal neckwarmer (Buff)"],
+        "chest": ["Baselayer", "Thermal long-sleeve jersey", "Insulated vest or jacket"],
+        "hands": ["Insulated gloves"],
+        "legs": ["Thermal bib tights"],
+        "feet": [
+          {
+            "options": [
+              ["Wool socks", "Neoprene shoe covers"],
+              ["Winter cycling shoes", "Wool socks"]
+            ]
+          }
+        ]
       },
-      "explanation": "Very cold conditions - near freezing, maximum protection needed"
-    },
-    {
-      "minTemp": -1,
-      "maxTemp": 1,
-      "items": {
-        "head": ["Lined skullcap"],
-        "chest": ["Long-sleeve heavy wicking turtleneck undershirt", "Heavy cycling jacket"],
-        "legs": ["Heavyweight tights"],
-        "hands": ["Heavy-weight gloves"],
-        "feet": ["Winter cycling shoes", "Shoe covers", "Wool socks with charcoal toe warmers"]
-      },
-      "explanation": "Below freezing - skullcap for head protection"
-    },
-    {
-      "minTemp": -4,
-      "maxTemp": -1,
-      "items": {
-        "neckFace": ["Balaclava"],
-        "chest": [
-          "Long-sleeve heavy wicking full turtleneck undershirt",
-          "Long-sleeve jersey",
-          "Lined cycling jacket"
-        ],
-        "legs": ["Winter bib tights"],
-        "hands": ["Mittens or lobster claw gloves"],
-        "feet": ["Winter cycling shoes", "Wool socks", "Plastic bag", "Charcoal toe warmers"]
-      },
-      "explanation": "Extreme cold - maximum protection with balaclava and mittens"
-    },
-    {
-      "minTemp": null,
-      "maxTemp": -4,
-      "items": {
-        "neckFace": ["Balaclava"],
-        "chest": [
-          "Long-sleeve heavy wicking full turtleneck undershirt",
-          "Long-sleeve jersey",
-          "Lined cycling jacket"
-        ],
-        "legs": ["Winter bib tights"],
-        "hands": ["Mittens or lobster claw gloves"],
-        "feet": ["Winter cycling shoes", "Wool socks", "Plastic bag", "Charcoal toe warmers"]
-      },
-      "explanation": "Severe cold - full winter protection essential"
+      "explanation": "Very cold conditions - full thermal protection"
     }
   ],
   "windModifiers": [
@@ -146,4 +125,3 @@
     "explanation": "Start temperature is cold - consider removable layers for warming up"
   }
 }
-

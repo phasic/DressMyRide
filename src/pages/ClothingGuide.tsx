@@ -1109,6 +1109,139 @@ export function ClothingGuide({}: GuideProps) {
     return null;
   };
 
+  // Find all locations where an item appears
+  const findAllItemLocations = (
+    itemName: string,
+    bodyPart: 'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet'
+  ): Array<{ type: 'temp' | 'wind' | 'rain'; rangeIndex?: number; modifierIndex?: number }> => {
+    const locations: Array<{ type: 'temp' | 'wind' | 'rain'; rangeIndex?: number; modifierIndex?: number }> = [];
+
+    // Check temperature ranges
+    for (let i = 0; i < currentWardrobe.temperatureRanges.length; i++) {
+      const range = currentWardrobe.temperatureRanges[i];
+      const items = range.items[bodyPart] || [];
+      for (const item of items) {
+        if (typeof item === 'string' && item === itemName) {
+          locations.push({ type: 'temp', rangeIndex: i });
+          break; // Found in this range, move to next range
+        } else if (typeof item === 'object' && item !== null && 'options' in item) {
+          for (const option of item.options) {
+            if (option.includes(itemName)) {
+              locations.push({ type: 'temp', rangeIndex: i });
+              break; // Found in this range, move to next range
+            }
+          }
+        }
+      }
+    }
+
+    // Check wind modifiers
+    for (let i = 0; i < currentWardrobe.windModifiers.length; i++) {
+      const modifier = currentWardrobe.windModifiers[i];
+      const items = modifier.items[bodyPart] || [];
+      for (const item of items) {
+        if (typeof item === 'string' && item === itemName) {
+          locations.push({ type: 'wind', modifierIndex: i });
+          break;
+        } else if (typeof item === 'object' && item !== null && 'options' in item) {
+          for (const option of item.options) {
+            if (option.includes(itemName)) {
+              locations.push({ type: 'wind', modifierIndex: i });
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    // Check rain modifiers
+    for (let i = 0; i < currentWardrobe.rainModifiers.length; i++) {
+      const modifier = currentWardrobe.rainModifiers[i];
+      const items = modifier.items[bodyPart] || [];
+      for (const item of items) {
+        if (typeof item === 'string' && item === itemName) {
+          locations.push({ type: 'rain', modifierIndex: i });
+          break;
+        } else if (typeof item === 'object' && item !== null && 'options' in item) {
+          for (const option of item.options) {
+            if (option.includes(itemName)) {
+              locations.push({ type: 'rain', modifierIndex: i });
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    return locations;
+  };
+
+  // Get item settings display (temp, wind, rain) - returns arrays for multiple ranges
+  const getItemSettings = (
+    itemName: string,
+    bodyPart: 'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet'
+  ): { temp?: string[]; wind?: string[]; rain?: string[] } => {
+    const locations = findAllItemLocations(itemName, bodyPart);
+    if (locations.length === 0) return {};
+
+    const settings: { temp?: string[]; wind?: string[]; rain?: string[] } = {};
+    const tempRanges: Array<{ display: string; sortValue: number }> = [];
+    const windSpeeds: string[] = [];
+    const rainRanges: string[] = [];
+
+    for (const location of locations) {
+      if (location.type === 'temp' && location.rangeIndex !== undefined) {
+        const range = currentWardrobe.temperatureRanges[location.rangeIndex];
+        let display = '';
+        let sortValue = 0;
+        
+        if (range.minTemp !== undefined && range.minTemp !== null && range.maxTemp !== undefined && range.maxTemp !== null) {
+          display = `${range.minTemp}° - ${range.maxTemp}°`;
+          sortValue = range.minTemp; // Sort by minimum temperature
+        } else if (range.minTemp !== undefined && range.minTemp !== null) {
+          display = `> ${range.minTemp}°`;
+          sortValue = range.minTemp;
+        } else if (range.maxTemp !== undefined && range.maxTemp !== null) {
+          display = `< ${range.maxTemp}°`;
+          sortValue = range.maxTemp - 1000; // Put max-only ranges at the beginning (very low sort value)
+        }
+        
+        if (display) {
+          tempRanges.push({ display, sortValue });
+        }
+      } else if (location.type === 'wind' && location.modifierIndex !== undefined) {
+        const modifier = currentWardrobe.windModifiers[location.modifierIndex];
+        if (modifier.minWindSpeed !== undefined) {
+          windSpeeds.push(`≥ ${modifier.minWindSpeed} km/h`);
+        }
+      } else if (location.type === 'rain' && location.modifierIndex !== undefined) {
+        const modifier = currentWardrobe.rainModifiers[location.modifierIndex];
+        if (modifier.minRainProbability !== undefined && modifier.maxRainProbability !== undefined) {
+          rainRanges.push(`${modifier.minRainProbability}% - ${modifier.maxRainProbability}%`);
+        } else if (modifier.minRainProbability !== undefined) {
+          rainRanges.push(`≥ ${modifier.minRainProbability}%`);
+        } else if (modifier.maxRainProbability !== undefined) {
+          rainRanges.push(`≤ ${modifier.maxRainProbability}%`);
+        }
+        // Note: maxTemp from rain modifiers is handled separately if needed
+      }
+    }
+
+    // Sort temperature ranges from low to high
+    if (tempRanges.length > 0) {
+      tempRanges.sort((a, b) => a.sortValue - b.sortValue);
+      settings.temp = tempRanges.map(t => t.display);
+    }
+    if (windSpeeds.length > 0) {
+      settings.wind = windSpeeds;
+    }
+    if (rainRanges.length > 0) {
+      settings.rain = rainRanges;
+    }
+
+    return settings;
+  };
+
   // Handle edit item
   const handleEditItem = (itemName: string, bodyPart: 'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet') => {
     const location = findItemLocation(itemName, bodyPart);
@@ -1503,42 +1636,61 @@ export function ClothingGuide({}: GuideProps) {
                   <span className="option-or">OR</span>
                 </li>
               )}
-              {optionItems.map((optionItem, itemIdx) => (
-                <li key={`${optionIdx}-${itemIdx}`} className={`${optionIdx > 0 ? "option-item" : ""} ${isEditMode ? "edit-mode-item" : ""}`}>
-                  {isEditMode ? (
-                    <>
-                      <span>{optionItem}</span>
-                      <div className="item-actions">
-                        <button
-                          className="btn-edit-item"
-                          onClick={() => handleEditItem(optionItem, bodyPart)}
-                          aria-label="Edit item"
-                        >
-                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M8.84 2.4L13.6 7.16L5.6 15.16H0.8V10.4L8.84 2.4ZM9.84 1.4L11.28 0L16 4.72L14.6 6.16L9.84 1.4Z" fill="currentColor"/>
-                          </svg>
-                        </button>
-                        <button
-                          className="btn-delete-item"
-                          onClick={() => handleDeleteItem(optionItem, bodyPart)}
-                          aria-label="Delete item"
-                        >
-                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M2 4H14M6 4V2C6 1.44772 6.44772 1 7 1H9C9.55228 1 10 1.44772 10 2V4M12 4V14C12 14.5523 11.5523 15 11 15H5C4.44772 15 4 14.5523 4 14V4H12Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </button>
+              {optionItems.map((optionItem, itemIdx) => {
+                const settings = getItemSettings(optionItem, bodyPart);
+                return (
+                  <li key={`${optionIdx}-${itemIdx}`} className={`${optionIdx > 0 ? "option-item" : ""} ${isEditMode ? "edit-mode-item" : ""}`}>
+                    {isEditMode ? (
+                      <>
+                        <span>{optionItem}</span>
+                        <div className="item-actions">
+                          <button
+                            className="btn-edit-item"
+                            onClick={() => handleEditItem(optionItem, bodyPart)}
+                            aria-label="Edit item"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M8.84 2.4L13.6 7.16L5.6 15.16H0.8V10.4L8.84 2.4ZM9.84 1.4L11.28 0L16 4.72L14.6 6.16L9.84 1.4Z" fill="currentColor"/>
+                            </svg>
+                          </button>
+                          <button
+                            className="btn-delete-item"
+                            onClick={() => handleDeleteItem(optionItem, bodyPart)}
+                            aria-label="Delete item"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M2 4H14M6 4V2C6 1.44772 6.44772 1 7 1H9C9.55228 1 10 1.44772 10 2V4M12 4V14C12 14.5523 11.5523 15 11 15H5C4.44772 15 4 14.5523 4 14V4H12Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="item-content">
+                        <span>{optionItem}</span>
+                        {(settings.temp || settings.wind || settings.rain) && (
+                          <div className="item-settings">
+                            {settings.temp && settings.temp.map((temp, idx) => (
+                              <span key={`temp-${idx}`} className="setting-badge setting-temp">{temp}</span>
+                            ))}
+                            {settings.wind && settings.wind.map((wind, idx) => (
+                              <span key={`wind-${idx}`} className="setting-badge setting-wind">{wind}</span>
+                            ))}
+                            {settings.rain && settings.rain.map((rain, idx) => (
+                              <span key={`rain-${idx}`} className="setting-badge setting-rain">{rain}</span>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    </>
-                  ) : (
-                    <span>{optionItem}</span>
-                  )}
-                </li>
-              ))}
+                    )}
+                  </li>
+                );
+              })}
             </Fragment>
           ))}
         </Fragment>
       );
     }
+    const settings = getItemSettings(item, bodyPart);
     return (
       <li key={idx} className={isEditMode ? "edit-mode-item" : ""}>
         {isEditMode ? (
@@ -1566,7 +1718,22 @@ export function ClothingGuide({}: GuideProps) {
             </div>
           </>
         ) : (
-          <span>{item}</span>
+          <div className="item-content">
+            <span>{item}</span>
+            {(settings.temp || settings.wind || settings.rain) && (
+              <div className="item-settings">
+                {settings.temp && settings.temp.map((temp, idx) => (
+                  <span key={`temp-${idx}`} className="setting-badge setting-temp">{temp}</span>
+                ))}
+                {settings.wind && settings.wind.map((wind, idx) => (
+                  <span key={`wind-${idx}`} className="setting-badge setting-wind">{wind}</span>
+                ))}
+                {settings.rain && settings.rain.map((rain, idx) => (
+                  <span key={`rain-${idx}`} className="setting-badge setting-rain">{rain}</span>
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </li>
     );
@@ -2450,7 +2617,7 @@ export function ClothingGuide({}: GuideProps) {
                       />
                     </div>
                     <ul className="item-group-list">
-                      {group.items.map((item, idx) => renderItemWithControls(item, idx, 'chest'))}
+                      {group.items.map((item, idx) => renderItemWithControls(item, idx, 'neckFace'))}
                     </ul>
                   </div>
                 ))}

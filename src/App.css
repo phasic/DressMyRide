@@ -1694,6 +1694,13 @@ main {
   list-style-position: outside;
 }
 
+.item-group-list li .item-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+
 .item-group-list li.edit-mode-item {
   display: flex !important;
   list-style: none;

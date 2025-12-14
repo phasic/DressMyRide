@@ -274,3 +274,69 @@
   }
 }
 
+/* Item settings display */
+.item-settings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-color);
+}
+
+.setting-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.setting-temp {
+  background-color: rgba(255, 149, 0, 0.15);
+  color: #FF9500;
+}
+
+.setting-wind {
+  background-color: rgba(88, 86, 214, 0.15);
+  color: #5856D6;
+}
+
+.setting-rain {
+  background-color: rgba(0, 122, 255, 0.15);
+  color: #007AFF;
+}
+
+:root.dark .setting-temp {
+  background-color: rgba(255, 149, 0, 0.2);
+  color: #FF9500;
+}
+
+:root.dark .setting-wind {
+  background-color: rgba(88, 86, 214, 0.2);
+  color: #5856D6;
+}
+
+:root.dark .setting-rain {
+  background-color: rgba(0, 122, 255, 0.2);
+  color: #007AFF;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .setting-temp {
+    background-color: rgba(255, 149, 0, 0.2);
+    color: #FF9500;
+  }
+
+  :root:not(.light) .setting-wind {
+    background-color: rgba(88, 86, 214, 0.2);
+    color: #5856D6;
+  }
+
+  :root:not(.light) .setting-rain {
+    background-color: rgba(0, 122, 255, 0.2);
+    color: #007AFF;
+  }
+}
+
