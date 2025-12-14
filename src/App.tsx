@@ -8,6 +8,7 @@ import { ClothingGuide } from './pages/ClothingGuide';
 import { About } from './pages/About';
 import { Welcome } from './pages/Welcome';
 import { WardrobeManagement } from './pages/WardrobeManagement';
+import { getActiveWardrobe } from './utils/wardrobeUtils';
 import { BottomTabBar } from './components/BottomTabBar';
 import { InstallPrompt } from './components/InstallPrompt';
 import { fetchWeatherForecast } from './services/weatherService';
@@ -35,6 +36,16 @@ function App() {
   const [forceShowInstallPrompt, setForceShowInstallPrompt] = useState(false);
   const [showFloatingActions, setShowFloatingActions] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [selectedWardrobeId, setSelectedWardrobeId] = useState<string | null>(() => storage.getSelectedWardrobeId());
+  const [wardrobes, setWardrobes] = useState(() => storage.getWardrobes());
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  
+  // Get current wardrobe and check if it's the default wardrobe
+  // This uses the same logic as ClothingGuide and checks the wardrobe object's isDefault property
+  const currentWardrobe = getActiveWardrobe(wardrobes, selectedWardrobeId);
+  const isDefaultWardrobe = currentWardrobe.isDefault || !selectedWardrobeId || selectedWardrobeId === 'default';
 
   // Handle scroll for floating actions visibility
   useEffect(() => {
@@ -85,6 +96,58 @@ function App() {
     }
   }, []);
 
+  // Listen for wardrobe changes to update edit button visibility
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setSelectedWardrobeId(storage.getSelectedWardrobeId());
+      setWardrobes(storage.getWardrobes());
+    };
+
+    // Check on page change to guide
+    if (page === 'guide') {
+      setSelectedWardrobeId(storage.getSelectedWardrobeId());
+      setWardrobes(storage.getWardrobes());
+    }
+
+    // Listen for custom events that might change wardrobe
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('wardrobeChanged', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('wardrobeChanged', handleStorageChange);
+    };
+  }, [page]);
+
+  // Listen for edit mode changes from ClothingGuide
+  useEffect(() => {
+    const handleEditModeChange = (e: CustomEvent<boolean>) => {
+      setIsEditMode(e.detail);
+      if (!e.detail) {
+        // Edit mode turned off, close any open confirmations
+        setShowDiscardConfirm(false);
+        setShowSaveConfirm(false);
+      }
+    };
+
+    window.addEventListener('wardrobeEditModeChanged', handleEditModeChange as EventListener);
+    return () => window.removeEventListener('wardrobeEditModeChanged', handleEditModeChange as EventListener);
+  }, []);
+
+  // Handle save all changes
+  const handleSaveAllChanges = () => {
+    // Dispatch event to ClothingGuide to save and exit edit mode
+    window.dispatchEvent(new CustomEvent('saveWardrobeChanges'));
+    setShowSaveConfirm(false);
+  };
+
+  // Handle discard all changes
+  const handleDiscardAllChanges = () => {
+    // Dispatch event to ClothingGuide to discard and exit edit mode
+    window.dispatchEvent(new CustomEvent('discardWardrobeChanges'));
+    setShowDiscardConfirm(false);
+  };
+
   const handleRideConfig = async (loc: Location, rideConfig: RideConfig) => {
     setLoading(true);
     setError(null);
@@ -131,30 +194,77 @@ function App() {
     <div className="app">
       {page !== 'welcome' && page !== 'settings' && page !== 'about' && (
       <div className={`floating-header-actions ${showFloatingActions ? 'visible' : 'hidden'}`}>
-        {page === 'guide' && (
-          <button
-            className="btn-icon floating-action"
-            onClick={() => {
-              // Toggle edit mode - will be handled by ClothingGuide component
-              const event = new CustomEvent('toggleWardrobeEdit');
-              window.dispatchEvent(event);
-            }}
-            aria-label="Edit Wardrobe"
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M11.05 3.00002L4.20835 10.2417C3.95002 10.5167 3.70002 11.0584 3.65002 11.4334L3.34169 14.1334C3.23335 15.1084 3.93335 15.775 4.90002 15.6084L7.58335 15.15C7.95835 15.0834 8.48335 14.8084 8.74169 14.525L15.5834 7.28335C16.7667 6.03335 17.3 4.60835 15.4584 2.86668C13.625 1.14168 12.2334 1.75002 11.05 3.00002Z" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M9.90833 4.20831C10.2667 6.50831 12.1333 8.26665 14.45 8.49998" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2.5 18.3333H17.5" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
+        {page === 'guide' && !isDefaultWardrobe && (
+          <>
+            {!isEditMode ? (
+              <button
+                className="btn-icon floating-action"
+                onClick={() => {
+                  // Toggle edit mode - will be handled by ClothingGuide component
+                  const event = new CustomEvent('toggleWardrobeEdit');
+                  window.dispatchEvent(event);
+                }}
+                aria-label="Edit Wardrobe"
+              >
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M11.05 3.00002L4.20835 10.2417C3.95002 10.5167 3.70002 11.0584 3.65002 11.4334L3.34169 14.1334C3.23335 15.1084 3.93335 15.775 4.90002 15.6084L7.58335 15.15C7.95835 15.0834 8.48335 14.8084 8.74169 14.525L15.5834 7.28335C16.7667 6.03335 17.3 4.60835 15.4584 2.86668C13.625 1.14168 12.2334 1.75002 11.05 3.00002Z" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M9.90833 4.20831C10.2667 6.50831 12.1333 8.26665 14.45 8.49998" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M2.5 18.3333H17.5" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            ) : (
+              <>
+                <button
+                  className="btn-icon floating-action"
+                  onClick={() => setShowDiscardConfirm(true)}
+                  aria-label="Discard changes"
+                  style={{
+                    backgroundColor: '#FF3B30',
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: 'none',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 16px rgba(255, 59, 48, 0.3)',
+                  }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 5L5 15M5 5L15 15" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+                <button
+                  className="btn-icon floating-action"
+                  onClick={() => setShowSaveConfirm(true)}
+                  aria-label="Save changes"
+                  style={{
+                    backgroundColor: '#34C759',
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: 'none',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 16px rgba(52, 199, 89, 0.3)',
+                  }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M16.667 5L7.5 14.167L3.333 10" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              </>
+            )}
+          </>
         )}
         <button
           className="btn-icon floating-action"
           onClick={() => {
             // Save current page before navigating to settings
-            if (page !== 'settings' && page !== 'about') {
-              setPreviousPage(page);
-            }
+            setPreviousPage(page);
             setPage('settings');
           }}
           aria-label="Settings"
@@ -273,9 +383,63 @@ function App() {
               onForceShowChange={setForceShowInstallPrompt}
             />
           )}
-        </div>
-      );
-    }
 
-    export default App;
+      {/* Discard Changes Confirmation Modal */}
+      {showDiscardConfirm && (
+        <div className="modal-overlay" onClick={() => setShowDiscardConfirm(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Discard All Changes?</h3>
+            <p>Are you sure you want to discard all changes? This will reload the wardrobe and undo any edits you've made.</p>
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowDiscardConfirm(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleDiscardAllChanges}
+                style={{ backgroundColor: '#FF3B30' }}
+              >
+                Discard Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Save Changes Confirmation Modal */}
+      {showSaveConfirm && (
+        <div className="modal-overlay" onClick={() => setShowSaveConfirm(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Save All Changes?</h3>
+            <p>Are you sure you want to save all changes and exit edit mode?</p>
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowSaveConfirm(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleSaveAllChanges}
+                style={{ backgroundColor: '#34C759' }}
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default App;
 

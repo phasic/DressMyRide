@@ -18,6 +18,10 @@ export function ClothingGuide({}: GuideProps) {
   const [showAddClothingModal, setShowAddClothingModal] = useState(false);
   const [showAddFirstClothingModal, setShowAddFirstClothingModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDeleteItemConfirm, setShowDeleteItemConfirm] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{ name: string; bodyPart: 'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet' } | null>(null);
+  const [addClothingError, setAddClothingError] = useState<string>('');
+  const [editItemError, setEditItemError] = useState<string>('');
   const [newClothingName, setNewClothingName] = useState('');
   const [newClothingBodyPart, setNewClothingBodyPart] = useState<'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet'>('chest');
   const [newClothingType, setNewClothingType] = useState<'temp' | 'wind' | 'rain'>('temp');
@@ -33,6 +37,7 @@ export function ClothingGuide({}: GuideProps) {
   const [createFromScratch, setCreateFromScratch] = useState(false);
   const [baseWardrobeId, setBaseWardrobeId] = useState<string>('default');
   const [isEditMode, setIsEditMode] = useState(false);
+  const [wardrobeSnapshot, setWardrobeSnapshot] = useState<WardrobeConfig[] | null>(null);
   const [editingItem, setEditingItem] = useState<{
     item: string;
     bodyPart: 'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet';
@@ -69,7 +74,9 @@ export function ClothingGuide({}: GuideProps) {
     return getActiveWardrobe(wardrobes, selectedWardrobeId);
   }, [wardrobes, selectedWardrobeId]);
 
-  const isDefaultWardrobe = selectedWardrobeId === null || selectedWardrobeId === 'default';
+  // Check if default wardrobe is selected - use the wardrobe object's isDefault property
+  // This is the most reliable way since the default wardrobe from clothingConfig.json has isDefault: true
+  const isDefaultWardrobe = currentWardrobe.isDefault || !selectedWardrobeId || selectedWardrobeId === 'default' || selectedWardrobeId === '';
 
   // Check if there are multiple wardrobes
   const hasMultipleWardrobes = wardrobes.length > 0;
@@ -202,16 +209,65 @@ export function ClothingGuide({}: GuideProps) {
   useEffect(() => {
     const handleToggleEdit = () => {
       if (!isDefaultWardrobe) {
-        setIsEditMode(prev => !prev);
-        if (isEditMode) {
-          setEditingItem(null); // Close any open edit modals when exiting edit mode
-        }
+        setIsEditMode(prev => {
+          const newMode = !prev;
+          // Dispatch edit mode change to App component
+          window.dispatchEvent(new CustomEvent('wardrobeEditModeChanged', { detail: newMode }));
+          if (newMode) {
+            // Entering edit mode - save snapshot
+            setWardrobeSnapshot(JSON.parse(JSON.stringify(wardrobes))); // Deep clone
+          } else {
+            // Exiting edit mode - clear snapshot
+            setWardrobeSnapshot(null);
+            setEditingItem(null); // Close any open edit modals when exiting edit mode
+            setEditItemError('');
+          }
+          return newMode;
+        });
       }
     };
 
     window.addEventListener('toggleWardrobeEdit', handleToggleEdit);
     return () => window.removeEventListener('toggleWardrobeEdit', handleToggleEdit);
-  }, [isDefaultWardrobe, isEditMode]);
+  }, [isDefaultWardrobe, wardrobes]);
+
+  // Listen for save/discard events from App component
+  useEffect(() => {
+    const handleSaveChanges = () => {
+      // Save all changes to storage
+      if (wardrobes) {
+        storage.setWardrobes(wardrobes);
+      }
+      setIsEditMode(false);
+      setWardrobeSnapshot(null);
+      setEditingItem(null);
+      setEditItemError('');
+      window.dispatchEvent(new CustomEvent('wardrobeEditModeChanged', { detail: false }));
+    };
+
+    const handleDiscardChanges = () => {
+      // Restore wardrobe from snapshot to discard any unsaved changes
+      if (wardrobeSnapshot) {
+        setWardrobes(wardrobeSnapshot);
+      } else {
+        // Fallback: reload from storage if no snapshot
+        setWardrobes(storage.getWardrobes());
+      }
+      setIsEditMode(false);
+      setWardrobeSnapshot(null);
+      setEditingItem(null);
+      setEditItemError('');
+      window.dispatchEvent(new CustomEvent('wardrobeEditModeChanged', { detail: false }));
+    };
+
+    window.addEventListener('saveWardrobeChanges', handleSaveChanges);
+    window.addEventListener('discardWardrobeChanges', handleDiscardChanges);
+    
+    return () => {
+      window.removeEventListener('saveWardrobeChanges', handleSaveChanges);
+      window.removeEventListener('discardWardrobeChanges', handleDiscardChanges);
+    };
+  }, [wardrobes, wardrobeSnapshot]);
 
   // Listen for add clothing button click
   useEffect(() => {
@@ -262,14 +318,32 @@ export function ClothingGuide({}: GuideProps) {
 
   const handleSelectWardrobe = (id: string | null) => {
     const wardrobeId = id === 'default' ? null : id;
+    
+    // If switching wardrobes while in edit mode, save changes first, then exit edit mode
+    if (isEditMode && selectedWardrobeId !== wardrobeId) {
+      // Save current changes before switching
+      if (wardrobes) {
+        storage.setWardrobes(wardrobes);
+      }
+      setIsEditMode(false);
+      setWardrobeSnapshot(null);
+      setEditingItem(null);
+      setEditItemError('');
+      window.dispatchEvent(new CustomEvent('wardrobeEditModeChanged', { detail: false }));
+    }
+    
     setSelectedWardrobeId(wardrobeId);
     storage.setSelectedWardrobeId(wardrobeId);
     setShowWardrobeSwitcher(false);
+    // Dispatch event to notify App component
+    window.dispatchEvent(new CustomEvent('wardrobeChanged'));
   };
 
   const handleAddFirstClothing = () => {
+    setAddClothingError('');
+    
     if (!newClothingName.trim()) {
-      alert('Please enter a clothing item name');
+      setAddClothingError('Please enter a clothing item name');
       return;
     }
 
@@ -283,6 +357,12 @@ export function ClothingGuide({}: GuideProps) {
     const clothingItem: ClothingItem = newClothingName.trim();
 
     if (newClothingType === 'temp') {
+      // Validate that at least one temperature field is provided
+      if (!newClothingMinTemp.trim() && !newClothingMaxTemp.trim()) {
+        setAddClothingError('Please enter at least one temperature (minimum or maximum)');
+        return;
+      }
+      
       const minTemp = newClothingMinTemp ? parseFloat(newClothingMinTemp) : null;
       const maxTemp = newClothingMaxTemp ? parseFloat(newClothingMaxTemp) : undefined;
 
@@ -312,7 +392,7 @@ export function ClothingGuide({}: GuideProps) {
     } else if (newClothingType === 'wind') {
       const minWindSpeed = parseFloat(newClothingMinWind);
       if (isNaN(minWindSpeed)) {
-        alert('Please enter a valid wind speed');
+        setAddClothingError('Please enter a valid wind speed');
         return;
       }
 
@@ -341,7 +421,7 @@ export function ClothingGuide({}: GuideProps) {
     } else if (newClothingType === 'rain') {
       const minRainProbability = parseFloat(newClothingMinRain);
       if (isNaN(minRainProbability)) {
-        alert('Please enter a valid rain probability');
+        setAddClothingError('Please enter a valid rain probability');
         return;
       }
       const maxRainProbability = newClothingMaxRain ? parseFloat(newClothingMaxRain) : undefined;
@@ -378,7 +458,10 @@ export function ClothingGuide({}: GuideProps) {
     const updatedWardrobes = [...wardrobes];
     updatedWardrobes[wardrobeIndex] = newWardrobe;
     setWardrobes(updatedWardrobes);
-    storage.setWardrobes(updatedWardrobes);
+    // Only save to storage if not in edit mode (changes are saved when exiting edit mode)
+    if (!isEditMode) {
+      storage.setWardrobes(updatedWardrobes);
+    }
     
     // Reset form
     setNewClothingName('');
@@ -390,6 +473,7 @@ export function ClothingGuide({}: GuideProps) {
     setNewClothingMinRain('');
     setNewClothingMaxRain('');
     setNewClothingMaxTempRain('');
+    setAddClothingError('');
     setShowAddFirstClothingModal(false);
   };
 
@@ -466,6 +550,7 @@ export function ClothingGuide({}: GuideProps) {
       rain: number;
       weather: WeatherSummary;
       config: RideConfig;
+      applicableRanges?: TemperatureRange[]; // Track which ranges apply to this scenario
     }> = [];
 
     // If no ranges exist, return empty array - always base ranges on wardrobe items
@@ -499,6 +584,11 @@ export function ClothingGuide({}: GuideProps) {
       return false;
     });
     
+    // Early return if no ranges have items
+    if (rangesWithItems.length === 0) {
+      return scenarios;
+    }
+    
     // Only collect breakpoints from ranges that have items
     rangesWithItems.forEach(range => {
       // Add minTemp if it exists (null means no lower bound)
@@ -513,6 +603,21 @@ export function ClothingGuide({}: GuideProps) {
 
     // Sort breakpoints descending (hot to cold)
     const sortedBreakpoints = Array.from(tempBreakpoints).sort((a, b) => b - a);
+
+    // Check if there are ranges with only minTemp (no maxTemp)
+    // A range has only minTemp if minTemp exists and maxTemp is null or undefined
+    const rangesWithOnlyMinTemp = rangesWithItems.filter(range => {
+      const hasMinTemp = range.minTemp !== null && range.minTemp !== undefined;
+      const hasNoMaxTemp = range.maxTemp === null || range.maxTemp === undefined;
+      return hasMinTemp && hasNoMaxTemp;
+    });
+    
+    // Check if there are ranges with only maxTemp (no minTemp)
+    const rangesWithOnlyMaxTemp = rangesWithItems.filter(range => 
+      (range.minTemp === null || range.minTemp === undefined) && 
+      range.maxTemp !== null && 
+      range.maxTemp !== undefined
+    );
 
     // Create segments between consecutive breakpoints
     // Each segment represents a temperature range where a specific set of clothing ranges apply
@@ -563,9 +668,253 @@ export function ClothingGuide({}: GuideProps) {
             wind: 10, 
             rain: 0, 
             weather, 
-            config 
+            config,
+            applicableRanges // Store which ranges apply to this scenario
           });
         }
+      }
+      
+      // Special handling: if this is the highest breakpoint and there are ranges with only minTemp
+      // that match temperatures above this breakpoint, we need to create a scenario above it
+      if (i === 0) { // This is the highest (first) breakpoint
+        const rangesAboveBreakpoint = rangesWithOnlyMinTemp.filter(range => 
+          range.minTemp !== null && 
+          range.minTemp !== undefined && 
+          range.minTemp <= segmentMaxTemp // Range starts at or below this breakpoint
+        );
+        
+        if (rangesAboveBreakpoint.length > 0) {
+          // Create a scenario above the highest breakpoint
+          const representativeTemp = segmentMaxTemp + 5; // 5°C above the breakpoint
+          
+          // Check if we already have a scenario that would show these ranges
+          const rangesAlreadyShown = scenarios.some(scenario => {
+            const scenarioTemp = scenario.weather.minFeelsLike;
+            return rangesAboveBreakpoint.some(range => {
+              const minMatch = range.minTemp === null || scenarioTemp > range.minTemp;
+              const maxMatch = range.maxTemp === null || range.maxTemp === undefined || scenarioTemp <= range.maxTemp;
+              return minMatch && maxMatch;
+            });
+          });
+          
+          if (!rangesAlreadyShown) {
+            const weather: WeatherSummary = {
+              minTemp: representativeTemp,
+              maxTemp: representativeTemp + 1,
+              minFeelsLike: representativeTemp,
+              maxFeelsLike: representativeTemp + 1,
+              maxWindSpeed: 10,
+              maxRainProbability: 0,
+              maxPrecipitationIntensity: 0,
+            };
+
+            const config: RideConfig = {
+              startTime: new Date(),
+              durationHours: 2,
+              units,
+            };
+
+            scenarios.push({ 
+              minTemp: segmentMaxTemp, 
+              maxTemp: segmentMaxTemp + 20, // Extend 20°C above for display
+              temp: Math.round(representativeTemp), 
+              wind: 10, 
+              rain: 0, 
+              weather, 
+              config,
+              applicableRanges: rangesAboveBreakpoint
+            });
+          }
+        }
+      }
+    }
+
+    // Handle ranges with only minTemp (no maxTemp) - create scenarios above their minTemp
+    // These ranges match any temperature > minTemp, so we need to ensure scenarios are created
+    rangesWithOnlyMinTemp.forEach(range => {
+      if (range.minTemp === null || range.minTemp === undefined) return;
+      
+      // Create a scenario at a temperature above the minTemp
+      // Use minTemp + 5°C as representative to ensure it's clearly above the boundary
+      const representativeTemp = range.minTemp + 5;
+      
+      // Check if we already have a scenario that would show this range's items
+      // We need to check if any existing scenario's applicableRanges includes this range,
+      // OR if the scenario temp matches the range
+      const rangeAlreadyShown = scenarios.some(scenario => {
+        // First check if this range is already in the scenario's applicableRanges
+        if (scenario.applicableRanges && scenario.applicableRanges.some(r => 
+          r.minTemp === range.minTemp && 
+          (r.maxTemp === range.maxTemp || (r.maxTemp === null && range.maxTemp === null) || (r.maxTemp === undefined && range.maxTemp === undefined))
+        )) {
+          return true;
+        }
+        // Also check if the scenario temp would match this range
+        const scenarioTemp = scenario.weather.minFeelsLike;
+        const minMatch = range.minTemp === null || scenarioTemp > range.minTemp;
+        const maxMatch = range.maxTemp === null || range.maxTemp === undefined || scenarioTemp <= range.maxTemp;
+        return minMatch && maxMatch;
+      });
+      
+      if (!rangeAlreadyShown) {
+        const weather: WeatherSummary = {
+          minTemp: representativeTemp,
+          maxTemp: representativeTemp + 1,
+          minFeelsLike: representativeTemp,
+          maxFeelsLike: representativeTemp + 1,
+          maxWindSpeed: 10, // Low wind
+          maxRainProbability: 0, // No rain
+          maxPrecipitationIntensity: 0,
+        };
+
+        const config: RideConfig = {
+          startTime: new Date(),
+          durationHours: 2,
+          units,
+        };
+
+        scenarios.push({ 
+          minTemp: range.minTemp, 
+          maxTemp: range.minTemp + 20, // Extend 20°C above for display purposes
+          temp: Math.round(representativeTemp), 
+          wind: 10, 
+          rain: 0, 
+          weather, 
+          config,
+          applicableRanges: [range] // Store the range that applies
+        });
+      }
+    });
+
+    // Handle ranges with only maxTemp (no minTemp) - create scenarios below their maxTemp
+    rangesWithOnlyMaxTemp.forEach(range => {
+      if (range.maxTemp === null || range.maxTemp === undefined) return;
+      
+      // Create a scenario at a temperature below the maxTemp
+      // Use maxTemp - 5°C as representative to ensure it's clearly below the boundary
+      const representativeTemp = range.maxTemp - 5;
+      
+      // Check if we already have a scenario that would show this range's items
+      const rangeAlreadyShown = scenarios.some(scenario => {
+        const scenarioTemp = scenario.weather.minFeelsLike;
+        const minMatch = range.minTemp === null || range.minTemp === undefined || scenarioTemp > range.minTemp;
+        const maxMatch = range.maxTemp === null || range.maxTemp === undefined || scenarioTemp <= range.maxTemp;
+        return minMatch && maxMatch;
+      });
+      
+      if (!rangeAlreadyShown && representativeTemp > -50) { // Don't create scenarios below -50°C
+        const weather: WeatherSummary = {
+          minTemp: representativeTemp,
+          maxTemp: representativeTemp + 1,
+          minFeelsLike: representativeTemp,
+          maxFeelsLike: representativeTemp + 1,
+          maxWindSpeed: 10, // Low wind
+          maxRainProbability: 0, // No rain
+          maxPrecipitationIntensity: 0,
+        };
+
+        const config: RideConfig = {
+          startTime: new Date(),
+          durationHours: 2,
+          units,
+        };
+
+        scenarios.push({ 
+          minTemp: range.maxTemp - 20, // Extend 20°C below for display purposes
+          maxTemp: range.maxTemp, 
+          temp: Math.round(representativeTemp), 
+          wind: 10, 
+          rain: 0, 
+          weather, 
+          config,
+          applicableRanges: [range] // Store the range that applies
+        });
+      }
+    });
+
+    // If no scenarios were created but we have ranges with items, create at least one scenario
+    // This handles edge cases like ranges with only minTemp where segment logic might fail
+    if (scenarios.length === 0 && rangesWithItems.length > 0) {
+      // Prioritize ranges with only minTemp - these are the most likely to be missed
+      const rangesWithOnlyMin = rangesWithItems.filter(r => {
+        const hasMinTemp = r.minTemp !== null && r.minTemp !== undefined;
+        const hasNoMaxTemp = r.maxTemp === null || r.maxTemp === undefined;
+        return hasMinTemp && hasNoMaxTemp;
+      });
+      
+      if (rangesWithOnlyMin.length > 0) {
+        // Use the highest minTemp from ranges with only minTemp
+        const highestMinTemp = Math.max(...rangesWithOnlyMin.map(r => r.minTemp!));
+        const representativeTemp = highestMinTemp + 5;
+        
+        const weather: WeatherSummary = {
+          minTemp: representativeTemp,
+          maxTemp: representativeTemp + 1,
+          minFeelsLike: representativeTemp,
+          maxFeelsLike: representativeTemp + 1,
+          maxWindSpeed: 10,
+          maxRainProbability: 0,
+          maxPrecipitationIntensity: 0,
+        };
+
+        const config: RideConfig = {
+          startTime: new Date(),
+          durationHours: 2,
+          units,
+        };
+
+        scenarios.push({ 
+          minTemp: highestMinTemp, 
+          maxTemp: highestMinTemp + 20,
+          temp: Math.round(representativeTemp), 
+          wind: 10, 
+          rain: 0, 
+          weather, 
+          config,
+          applicableRanges: rangesWithOnlyMin
+        });
+      } else {
+        // Fallback for other cases
+        const highestMinTemp = rangesWithItems
+          .map(r => r.minTemp)
+          .filter(t => t !== null && t !== undefined)
+          .sort((a, b) => (b || 0) - (a || 0))[0] || 20;
+        
+        const representativeTemp = highestMinTemp + 5;
+        
+        const weather: WeatherSummary = {
+          minTemp: representativeTemp,
+          maxTemp: representativeTemp + 1,
+          minFeelsLike: representativeTemp,
+          maxFeelsLike: representativeTemp + 1,
+          maxWindSpeed: 10,
+          maxRainProbability: 0,
+          maxPrecipitationIntensity: 0,
+        };
+
+        const config: RideConfig = {
+          startTime: new Date(),
+          durationHours: 2,
+          units,
+        };
+
+        // Find which ranges apply to this scenario
+        const applicableRangesForFallback = rangesWithItems.filter(range => {
+          const minMatch = range.minTemp === null || representativeTemp > range.minTemp;
+          const maxMatch = range.maxTemp === null || range.maxTemp === undefined || representativeTemp <= range.maxTemp;
+          return minMatch && maxMatch;
+        });
+        
+        scenarios.push({ 
+          minTemp: highestMinTemp, 
+          maxTemp: highestMinTemp + 20,
+          temp: Math.round(representativeTemp), 
+          wind: 10, 
+          rain: 0, 
+          weather, 
+          config,
+          applicableRanges: applicableRangesForFallback
+        });
       }
     }
 
@@ -690,12 +1039,26 @@ export function ClothingGuide({}: GuideProps) {
         rangeIndex: location.rangeIndex,
         modifierIndex: location.modifierIndex,
       });
+      setEditItemError('');
     }
   };
 
   // Handle save edited item
   const handleSaveEditItem = () => {
-    if (!editingItem || !editItemName.trim()) return;
+    setEditItemError('');
+    
+    if (!editingItem || !editItemName.trim()) {
+      setEditItemError('Please enter a clothing item name');
+      return;
+    }
+
+    // Validate temperature fields if editing a temperature item
+    if (editItemType === 'temp') {
+      if (!editItemMinTemp.trim() && !editItemMaxTemp.trim()) {
+        setEditItemError('Please enter at least one temperature (minimum or maximum)');
+        return;
+      }
+    }
 
     const updatedWardrobes = wardrobes.map(wardrobe => {
       if (wardrobe.id !== currentWardrobe.id) return wardrobe;
@@ -963,9 +1326,13 @@ export function ClothingGuide({}: GuideProps) {
     });
 
     setWardrobes(updatedWardrobes);
-    storage.setWardrobes(updatedWardrobes);
+    // Only save to storage if not in edit mode (changes are saved when exiting edit mode)
+    if (!isEditMode) {
+      storage.setWardrobes(updatedWardrobes);
+    }
     setEditingItem(null);
     setEditItemName('');
+    setEditItemError('');
   };
 
   // Render item with edit controls
@@ -988,28 +1355,32 @@ export function ClothingGuide({}: GuideProps) {
               )}
               {optionItems.map((optionItem, itemIdx) => (
                 <li key={`${optionIdx}-${itemIdx}`} className={`${optionIdx > 0 ? "option-item" : ""} ${isEditMode ? "edit-mode-item" : ""}`}>
-                  <span>{optionItem}</span>
-                  {isEditMode && (
-                    <div className="item-actions">
-                      <button
-                        className="btn-edit-item"
-                        onClick={() => handleEditItem(optionItem, bodyPart)}
-                        aria-label="Edit item"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M8.84 2.4L13.6 7.16L5.6 15.16H0.8V10.4L8.84 2.4ZM9.84 1.4L11.28 0L16 4.72L14.6 6.16L9.84 1.4Z" fill="currentColor"/>
-                        </svg>
-                      </button>
-                      <button
-                        className="btn-delete-item"
-                        onClick={() => handleDeleteItem(optionItem, bodyPart)}
-                        aria-label="Delete item"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M2 4H14M6 4V2C6 1.44772 6.44772 1 7 1H9C9.55228 1 10 1.44772 10 2V4M12 4V14C12 14.5523 11.5523 15 11 15H5C4.44772 15 4 14.5523 4 14V4H12Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </button>
-                    </div>
+                  {isEditMode ? (
+                    <>
+                      <span>{optionItem}</span>
+                      <div className="item-actions">
+                        <button
+                          className="btn-edit-item"
+                          onClick={() => handleEditItem(optionItem, bodyPart)}
+                          aria-label="Edit item"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8.84 2.4L13.6 7.16L5.6 15.16H0.8V10.4L8.84 2.4ZM9.84 1.4L11.28 0L16 4.72L14.6 6.16L9.84 1.4Z" fill="currentColor"/>
+                          </svg>
+                        </button>
+                        <button
+                          className="btn-delete-item"
+                          onClick={() => handleDeleteItem(optionItem, bodyPart)}
+                          aria-label="Delete item"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2 4H14M6 4V2C6 1.44772 6.44772 1 7 1H9C9.55228 1 10 1.44772 10 2V4M12 4V14C12 14.5523 11.5523 15 11 15H5C4.44772 15 4 14.5523 4 14V4H12Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <span>{optionItem}</span>
                   )}
                 </li>
               ))}
@@ -1020,37 +1391,54 @@ export function ClothingGuide({}: GuideProps) {
     }
     return (
       <li key={idx} className={isEditMode ? "edit-mode-item" : ""}>
-        <span>{item}</span>
-        {isEditMode && (
-          <div className="item-actions">
-            <button
-              className="btn-edit-item"
-              onClick={() => handleEditItem(item, bodyPart)}
-              aria-label="Edit item"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M8.84 2.4L13.6 7.16L5.6 15.16H0.8V10.4L8.84 2.4ZM9.84 1.4L11.28 0L16 4.72L14.6 6.16L9.84 1.4Z" fill="currentColor"/>
-              </svg>
-            </button>
-            <button
-              className="btn-delete-item"
-              onClick={() => handleDeleteItem(item, bodyPart)}
-              aria-label="Delete item"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M2 4H14M6 4V2C6 1.44772 6.44772 1 7 1H9C9.55228 1 10 1.44772 10 2V4M12 4V14C12 14.5523 11.5523 15 11 15H5C4.44772 15 4 14.5523 4 14V4H12Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-          </div>
+        {isEditMode ? (
+          <>
+            <span>{item}</span>
+            <div className="item-actions">
+              <button
+                className="btn-edit-item"
+                onClick={() => handleEditItem(item, bodyPart)}
+                aria-label="Edit item"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M8.84 2.4L13.6 7.16L5.6 15.16H0.8V10.4L8.84 2.4ZM9.84 1.4L11.28 0L16 4.72L14.6 6.16L9.84 1.4Z" fill="currentColor"/>
+                </svg>
+              </button>
+              <button
+                className="btn-delete-item"
+                onClick={() => handleDeleteItem(item, bodyPart)}
+                aria-label="Delete item"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M2 4H14M6 4V2C6 1.44772 6.44772 1 7 1H9C9.55228 1 10 1.44772 10 2V4M12 4V14C12 14.5523 11.5523 15 11 15H5C4.44772 15 4 14.5523 4 14V4H12Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          </>
+        ) : (
+          <span>{item}</span>
         )}
       </li>
     );
   };
 
-  // Handle delete item
+  // Handle delete item - show confirmation first
   const handleDeleteItem = (itemName: string, bodyPart: 'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet') => {
+    setItemToDelete({ name: itemName, bodyPart });
+    setShowDeleteItemConfirm(true);
+  };
+
+  // Confirm and execute item deletion
+  const confirmDeleteItem = () => {
+    if (!itemToDelete) return;
+    
+    const { name: itemName, bodyPart } = itemToDelete;
     const location = findItemLocation(itemName, bodyPart);
-    if (!location) return;
+    if (!location) {
+      setShowDeleteItemConfirm(false);
+      setItemToDelete(null);
+      return;
+    }
 
     const updatedWardrobes = wardrobes.map(wardrobe => {
       if (wardrobe.id !== currentWardrobe.id) return wardrobe;
@@ -1118,7 +1506,12 @@ export function ClothingGuide({}: GuideProps) {
     });
 
     setWardrobes(updatedWardrobes);
-    storage.setWardrobes(updatedWardrobes);
+    // Only save to storage if not in edit mode (changes are saved when exiting edit mode)
+    if (!isEditMode) {
+      storage.setWardrobes(updatedWardrobes);
+    }
+    setShowDeleteItemConfirm(false);
+    setItemToDelete(null);
   };
 
   // Generate scenarios for wind variations - only show unique recommendations
@@ -1681,7 +2074,7 @@ export function ClothingGuide({}: GuideProps) {
         >
           <div className="current-wardrobe-info">
             <h3 className="current-wardrobe-name">{currentWardrobe.name}</h3>
-            {isDefaultWardrobe && (
+            {(isDefaultWardrobe || currentWardrobe.isDefault) && (
               <span className="wardrobe-badge">Default</span>
             )}
           </div>
@@ -1752,17 +2145,18 @@ export function ClothingGuide({}: GuideProps) {
                 >
                   Create new wardrobe
                 </button>
-                <button
-                  type="button"
-                  className="menu-item menu-item-danger"
-                  onClick={() => {
-                    setShowDeleteConfirm(true);
-                    setShowMenu(false);
-                  }}
-                  disabled={isDefaultWardrobe}
-                >
-                  Delete wardrobe
-                </button>
+                {!isDefaultWardrobe && (
+                  <button
+                    type="button"
+                    className="menu-item menu-item-danger"
+                    onClick={() => {
+                      setShowDeleteConfirm(true);
+                      setShowMenu(false);
+                    }}
+                  >
+                    Delete wardrobe
+                  </button>
+                )}
               </div>
             )}
             </div>
@@ -1955,16 +2349,39 @@ export function ClothingGuide({}: GuideProps) {
               return { scenario, recommendation };
             })
             .map(({ scenario, recommendation }, idx) => {
-              // Format temperature range
+              // Format temperature range based on actual wardrobe ranges
               const formatTempRange = () => {
+                // If we have applicable ranges info, use it to format correctly
+                if (scenario.applicableRanges && scenario.applicableRanges.length > 0) {
+                  // Check if all ranges have the same pattern
+                  const hasOnlyMinTemp = scenario.applicableRanges.every(r => 
+                    r.minTemp !== null && r.minTemp !== undefined && 
+                    (r.maxTemp === null || r.maxTemp === undefined)
+                  );
+                  const hasOnlyMaxTemp = scenario.applicableRanges.every(r => 
+                    (r.minTemp === null || r.minTemp === undefined) && 
+                    r.maxTemp !== null && r.maxTemp !== undefined
+                  );
+                  
+                  if (hasOnlyMinTemp && scenario.applicableRanges.length === 1) {
+                    // Only minTemp, show as "> minTemp"
+                    const range = scenario.applicableRanges[0];
+                    const minValue = units === 'metric' ? range.minTemp! : (range.minTemp! * 9/5) + 32;
+                    const minRounded = Math.round(minValue);
+                    return `> ${minRounded}${tempUnit}`;
+                  } else if (hasOnlyMaxTemp && scenario.applicableRanges.length === 1) {
+                    // Only maxTemp, show as "< maxTemp"
+                    const range = scenario.applicableRanges[0];
+                    const maxValue = units === 'metric' ? range.maxTemp! : (range.maxTemp! * 9/5) + 32;
+                    const maxRounded = Math.round(maxValue);
+                    return `< ${maxRounded}${tempUnit}`;
+                  }
+                }
+                
+                // Fallback to range display if both min and max are defined
                 if (scenario.minTemp !== undefined && scenario.maxTemp !== undefined) {
-                  // Use the exact minTemp and maxTemp values from the scenario
-                  // These values come directly from wardrobe breakpoints (already in metric)
-                  // IMPORTANT: Do not round these values - they should match exactly what's in the wardrobe
-                  // Convert to display units if needed, then round ONLY for display
                   const minValue = units === 'metric' ? scenario.minTemp : (scenario.minTemp * 9/5) + 32;
                   const maxValue = units === 'metric' ? scenario.maxTemp : (scenario.maxTemp * 9/5) + 32;
-                  // Round to nearest integer for display
                   const minRounded = Math.round(minValue);
                   const maxRounded = Math.round(maxValue);
                   return `${minRounded}-${maxRounded}${tempUnit}`;
@@ -2290,9 +2707,46 @@ export function ClothingGuide({}: GuideProps) {
         </div>
       )}
 
+      {/* Delete Item Confirmation Modal */}
+      {showDeleteItemConfirm && itemToDelete && (
+        <div className="modal-overlay" onClick={() => {
+          setShowDeleteItemConfirm(false);
+          setItemToDelete(null);
+        }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Delete Item?</h3>
+            <p>Are you sure you want to delete "{itemToDelete.name}"? This action cannot be undone.</p>
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  setShowDeleteItemConfirm(false);
+                  setItemToDelete(null);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={confirmDeleteItem}
+                style={{ backgroundColor: '#FF3B30' }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
       {/* Edit Item Modal */}
       {editingItem && (
-        <div className="modal-overlay" onClick={() => setEditingItem(null)}>
+        <div className="modal-overlay" onClick={() => {
+          setEditingItem(null);
+          setEditItemError('');
+        }}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
             <h3>Edit Clothing Item</h3>
             
@@ -2401,11 +2855,28 @@ export function ClothingGuide({}: GuideProps) {
               </>
             )}
 
+            {editItemError && (
+              <div style={{ 
+                color: '#FF3B30', 
+                fontSize: '14px', 
+                marginBottom: '16px',
+                padding: '8px 12px',
+                backgroundColor: 'rgba(255, 59, 48, 0.1)',
+                borderRadius: '8px',
+                border: '1px solid rgba(255, 59, 48, 0.2)'
+              }}>
+                {editItemError}
+              </div>
+            )}
+
             <div className="modal-actions">
               <button
                 type="button"
                 className="btn btn-secondary"
-                onClick={() => setEditingItem(null)}
+                onClick={() => {
+                  setEditingItem(null);
+                  setEditItemError('');
+                }}
               >
                 Cancel
               </button>
@@ -2581,6 +3052,20 @@ export function ClothingGuide({}: GuideProps) {
               </>
             )}
 
+            {addClothingError && (
+              <div style={{ 
+                color: '#FF3B30', 
+                fontSize: '14px', 
+                marginBottom: '16px',
+                padding: '8px 12px',
+                backgroundColor: 'rgba(255, 59, 48, 0.1)',
+                borderRadius: '8px',
+                border: '1px solid rgba(255, 59, 48, 0.2)'
+              }}>
+                {addClothingError}
+              </div>
+            )}
+
             <div className="modal-actions">
               <button
                 type="button"
@@ -2596,6 +3081,7 @@ export function ClothingGuide({}: GuideProps) {
                   setNewClothingMinRain('');
                   setNewClothingMaxRain('');
                   setNewClothingMaxTempRain('');
+                  setAddClothingError('');
                 }}
               >
                 Cancel

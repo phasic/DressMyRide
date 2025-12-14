@@ -252,7 +252,12 @@ export const storage = {
       },
 
       getSelectedWardrobeId: (): string | null => {
-        return localStorage.getItem(STORAGE_KEYS.SELECTED_WARDROBE);
+        const value = localStorage.getItem(STORAGE_KEYS.SELECTED_WARDROBE);
+        // Normalize: treat 'default' or empty string as null (default wardrobe)
+        if (!value || value === 'default' || value === '') {
+          return null;
+        }
+        return value;
       },
 
       setSelectedWardrobeId: (id: string | null): void => {

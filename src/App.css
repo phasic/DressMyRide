@@ -1694,6 +1694,13 @@ main {
   list-style-position: outside;
 }
 
+.item-group-list li.edit-mode-item {
+  display: flex !important;
+  list-style: none;
+  padding-left: 0;
+  justify-content: space-between;
+}
+
 .item-group-list li:not(:last-child) {
   margin-bottom: 2px;
 }
@@ -2486,21 +2493,27 @@ img.ios-tab-icon {
 
 /* Edit Mode Styles */
 .edit-mode-item {
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   padding: 4px 0;
+  flex-wrap: nowrap;
 }
 
 .edit-mode-item > span {
-  flex: 1;
+  flex: 1 1 auto;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .item-actions {
   display: flex;
   gap: 4px;
   align-items: center;
+  flex-shrink: 0;
+  white-space: nowrap;
+  margin-left: auto;
 }
 
 .btn-edit-item,
