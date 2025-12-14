@@ -38,6 +38,29 @@ export function Home({ onQuickRecommendation, onNavigateToWardrobe, weatherOverr
   const [touchStart, setTouchStart] = useState<{ y: number; scrollTop: number } | null>(null);
   const pageRef = useRef<HTMLDivElement>(null);
 
+  // Helper to check if a range/modifier has any items
+  const hasAnyItems = (items: { [key: string]: (string | { options: string[][] })[] | undefined }): boolean => {
+    const bodyParts: Array<'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet'> = 
+      ['head', 'neckFace', 'chest', 'legs', 'hands', 'feet'];
+    for (const part of bodyParts) {
+      const partItems = items[part] || [];
+      if (partItems.length > 0) {
+        for (const item of partItems) {
+          if (typeof item === 'string' && item.trim()) {
+            return true;
+          } else if (typeof item === 'object' && item !== null && 'options' in item) {
+            for (const option of item.options) {
+              if (option.length > 0 && option.some((opt: string) => opt.trim())) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
+  };
+
   // Check if current wardrobe is empty
   const isWardrobeEmpty = useMemo(() => {
     if (!quickViewData) return false;
@@ -48,9 +71,16 @@ export function Home({ onQuickRecommendation, onNavigateToWardrobe, weatherOverr
     
     if (isDefaultWardrobe) return false; // Default wardrobe is never empty
     
-    return currentWardrobe.temperatureRanges.length === 0 &&
-           currentWardrobe.windModifiers.length === 0 &&
-           currentWardrobe.rainModifiers.length === 0;
+    // Check if any temperature range has items
+    const hasTempItems = currentWardrobe.temperatureRanges.some(range => hasAnyItems(range.items as { [key: string]: (string | { options: string[][] })[] | undefined }));
+    
+    // Check if any wind modifier has items
+    const hasWindItems = currentWardrobe.windModifiers.some(modifier => hasAnyItems(modifier.items as { [key: string]: (string | { options: string[][] })[] | undefined }));
+    
+    // Check if any rain modifier has items
+    const hasRainItems = currentWardrobe.rainModifiers.some(modifier => hasAnyItems(modifier.items as { [key: string]: (string | { options: string[][] })[] | undefined }));
+    
+    return !hasTempItems && !hasWindItems && !hasRainItems;
   }, [quickViewData]);
 
   // Check if recommendation is empty
@@ -64,6 +94,7 @@ export function Home({ onQuickRecommendation, onNavigateToWardrobe, weatherOverr
            rec.hands.length === 0 &&
            rec.feet.length === 0;
   }, [quickViewData]);
+
 
   // Helper function to determine font size for temperature range
   const getTemperatureFontSize = (min: number, max: number): string | undefined => {
@@ -505,12 +536,28 @@ export function Home({ onQuickRecommendation, onNavigateToWardrobe, weatherOverr
                 <span>Refresh</span>
               </button>
             </div>
-            {isWardrobeEmpty && isRecommendationEmpty ? (
+            {isWardrobeEmpty ? (
               <div className="empty-wardrobe-quick-view-message">
                 <div className="empty-wardrobe-icon">👕</div>
                 <h3 className="empty-wardrobe-title">Your wardrobe is empty</h3>
                 <p className="empty-wardrobe-text">
                   Start adding clothing items or switch to a different wardrobe.
+                </p>
+                {onNavigateToWardrobe && (
+                  <button 
+                    className="btn btn-primary empty-wardrobe-button"
+                    onClick={onNavigateToWardrobe}
+                  >
+                    Go to Wardrobe
+                  </button>
+                )}
+              </div>
+            ) : isRecommendationEmpty ? (
+              <div className="empty-wardrobe-quick-view-message">
+                <div className="empty-wardrobe-icon">🌤️</div>
+                <h3 className="empty-wardrobe-title">No suitable clothing for this weather</h3>
+                <p className="empty-wardrobe-text">
+                  Your wardrobe doesn't have items suitable for these weather conditions. Add more clothing items to cover different temperatures, wind speeds, or rain conditions.
                 </p>
                 {onNavigateToWardrobe && (
                   <button 

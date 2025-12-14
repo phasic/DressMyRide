@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef, Fragment } from 'react';
 import { recommendClothing } from '../logic/clothingEngine';
-import { WeatherSummary, RideConfig, ClothingItem, WardrobeConfig } from '../types';
+import { WeatherSummary, RideConfig, ClothingItem, WardrobeConfig, TemperatureRange, WindModifier, RainModifier, ClothingItems } from '../types';
 import { storage } from '../utils/storage';
 import { getDefaultWardrobe, getActiveWardrobe } from '../utils/wardrobeUtils';
 import './ClothingGuide.css';
@@ -16,12 +16,39 @@ export function ClothingGuide({}: GuideProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAddClothingModal, setShowAddClothingModal] = useState(false);
+  const [showAddFirstClothingModal, setShowAddFirstClothingModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [newClothingName, setNewClothingName] = useState('');
+  const [newClothingBodyPart, setNewClothingBodyPart] = useState<'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet'>('chest');
+  const [newClothingType, setNewClothingType] = useState<'temp' | 'wind' | 'rain'>('temp');
+  const [newClothingMinTemp, setNewClothingMinTemp] = useState<string>('');
+  const [newClothingMaxTemp, setNewClothingMaxTemp] = useState<string>('');
+  const [newClothingMinWind, setNewClothingMinWind] = useState<string>('');
+  const [newClothingMinRain, setNewClothingMinRain] = useState<string>('');
+  const [newClothingMaxRain, setNewClothingMaxRain] = useState<string>('');
+  const [newClothingMaxTempRain, setNewClothingMaxTempRain] = useState<string>('');
   const [showWardrobeSwitcher, setShowWardrobeSwitcher] = useState(false);
   const [switcherPosition, setSwitcherPosition] = useState<{ top: number; right: number } | null>(null);
   const [newWardrobeName, setNewWardrobeName] = useState('');
   const [createFromScratch, setCreateFromScratch] = useState(false);
   const [baseWardrobeId, setBaseWardrobeId] = useState<string>('default');
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingItem, setEditingItem] = useState<{
+    item: string;
+    bodyPart: 'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet';
+    type: 'temp' | 'wind' | 'rain';
+    rangeIndex?: number;
+    modifierIndex?: number;
+  } | null>(null);
+  const [editItemName, setEditItemName] = useState('');
+  const [editItemBodyPart, setEditItemBodyPart] = useState<'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet'>('chest');
+  const [editItemType, setEditItemType] = useState<'temp' | 'wind' | 'rain'>('temp');
+  const [editItemMinTemp, setEditItemMinTemp] = useState<string>('');
+  const [editItemMaxTemp, setEditItemMaxTemp] = useState<string>('');
+  const [editItemMinWind, setEditItemMinWind] = useState<string>('');
+  const [editItemMinRain, setEditItemMinRain] = useState<string>('');
+  const [editItemMaxRain, setEditItemMaxRain] = useState<string>('');
+  const [editItemMaxTempRain, setEditItemMaxTempRain] = useState<string>('');
   const menuRef = useRef<HTMLDivElement>(null);
   const switcherRef = useRef<HTMLDivElement>(null);
   const [openSections, setOpenSections] = useState<{
@@ -119,12 +146,44 @@ export function ClothingGuide({}: GuideProps) {
     return result;
   }, [wardrobes]);
 
+  // Helper to check if a range/modifier has any items
+  const hasAnyItems = (items: ClothingItems): boolean => {
+    const bodyParts: Array<'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet'> = 
+      ['head', 'neckFace', 'chest', 'legs', 'hands', 'feet'];
+    for (const part of bodyParts) {
+      const partItems = items[part] || [];
+      if (partItems.length > 0) {
+        // Check if any item has actual content
+        for (const item of partItems) {
+          if (typeof item === 'string' && item.trim()) {
+            return true;
+          } else if (typeof item === 'object' && item !== null && 'options' in item) {
+            for (const option of item.options) {
+              if (option.length > 0 && option.some((opt: string) => opt.trim())) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
+  };
+
   // Check if wardrobe is empty
   const isWardrobeEmpty = useMemo(() => {
     if (isDefaultWardrobe) return false; // Default wardrobe is never empty
-    return currentWardrobe.temperatureRanges.length === 0 &&
-           currentWardrobe.windModifiers.length === 0 &&
-           currentWardrobe.rainModifiers.length === 0;
+    
+    // Check if any temperature range has items
+    const hasTempItems = currentWardrobe.temperatureRanges.some(range => hasAnyItems(range.items));
+    
+    // Check if any wind modifier has items
+    const hasWindItems = currentWardrobe.windModifiers.some(modifier => hasAnyItems(modifier.items));
+    
+    // Check if any rain modifier has items
+    const hasRainItems = currentWardrobe.rainModifiers.some(modifier => hasAnyItems(modifier.items));
+    
+    return !hasTempItems && !hasWindItems && !hasRainItems;
   }, [currentWardrobe, isDefaultWardrobe]);
 
   // Update units when global settings change
@@ -137,6 +196,21 @@ export function ClothingGuide({}: GuideProps) {
     setWardrobes(storage.getWardrobes());
     setSelectedWardrobeId(storage.getSelectedWardrobeId());
   }, []);
+
+  // Listen for edit mode toggle
+  useEffect(() => {
+    const handleToggleEdit = () => {
+      if (!isDefaultWardrobe) {
+        setIsEditMode(prev => !prev);
+        if (isEditMode) {
+          setEditingItem(null); // Close any open edit modals when exiting edit mode
+        }
+      }
+    };
+
+    window.addEventListener('toggleWardrobeEdit', handleToggleEdit);
+    return () => window.removeEventListener('toggleWardrobeEdit', handleToggleEdit);
+  }, [isDefaultWardrobe, isEditMode]);
 
   // Calculate dropdown position when switcher opens
   useEffect(() => {
@@ -173,6 +247,132 @@ export function ClothingGuide({}: GuideProps) {
     setSelectedWardrobeId(wardrobeId);
     storage.setSelectedWardrobeId(wardrobeId);
     setShowWardrobeSwitcher(false);
+  };
+
+  const handleAddFirstClothing = () => {
+    if (!newClothingName.trim()) {
+      alert('Please enter a clothing item name');
+      return;
+    }
+
+    if (!selectedWardrobeId || isDefaultWardrobe) return;
+
+    const wardrobeIndex = wardrobes.findIndex(w => w.id === selectedWardrobeId);
+    if (wardrobeIndex === -1) return;
+
+    const wardrobe = wardrobes[wardrobeIndex];
+    const newWardrobe: WardrobeConfig = { ...wardrobe };
+    const clothingItem: ClothingItem = newClothingName.trim();
+
+    if (newClothingType === 'temp') {
+      const minTemp = newClothingMinTemp ? parseFloat(newClothingMinTemp) : null;
+      const maxTemp = newClothingMaxTemp ? parseFloat(newClothingMaxTemp) : undefined;
+
+      // Find existing temperature range or create new one
+      const existingRange = newWardrobe.temperatureRanges.find(
+        range => range.minTemp === minTemp && range.maxTemp === maxTemp
+      );
+
+      if (existingRange) {
+        // Add to existing range
+        if (!existingRange.items[newClothingBodyPart]) {
+          existingRange.items[newClothingBodyPart] = [];
+        }
+        existingRange.items[newClothingBodyPart]!.push(clothingItem);
+      } else {
+        // Create new range
+        const newRange: TemperatureRange = {
+          minTemp,
+          maxTemp,
+          items: {
+            [newClothingBodyPart]: [clothingItem],
+          },
+          explanation: `Custom temperature range`,
+        };
+        newWardrobe.temperatureRanges.push(newRange);
+      }
+    } else if (newClothingType === 'wind') {
+      const minWindSpeed = parseFloat(newClothingMinWind);
+      if (isNaN(minWindSpeed)) {
+        alert('Please enter a valid wind speed');
+        return;
+      }
+
+      // Find existing wind modifier or create new one
+      const existingModifier = newWardrobe.windModifiers.find(
+        mod => mod.minWindSpeed === minWindSpeed
+      );
+
+      if (existingModifier) {
+        // Add to existing modifier
+        if (!existingModifier.items[newClothingBodyPart]) {
+          existingModifier.items[newClothingBodyPart] = [];
+        }
+        existingModifier.items[newClothingBodyPart]!.push(clothingItem);
+      } else {
+        // Create new modifier
+        const newModifier: WindModifier = {
+          minWindSpeed,
+          items: {
+            [newClothingBodyPart]: [clothingItem],
+          },
+          explanation: `Wind protection for ${minWindSpeed}+ km/h`,
+        };
+        newWardrobe.windModifiers.push(newModifier);
+      }
+    } else if (newClothingType === 'rain') {
+      const minRainProbability = parseFloat(newClothingMinRain);
+      if (isNaN(minRainProbability)) {
+        alert('Please enter a valid rain probability');
+        return;
+      }
+      const maxRainProbability = newClothingMaxRain ? parseFloat(newClothingMaxRain) : undefined;
+      const maxTemp = newClothingMaxTempRain ? parseFloat(newClothingMaxTempRain) : undefined;
+
+      // Find existing rain modifier or create new one
+      const existingModifier = newWardrobe.rainModifiers.find(
+        mod => mod.minRainProbability === minRainProbability &&
+               mod.maxRainProbability === maxRainProbability &&
+               mod.maxTemp === maxTemp
+      );
+
+      if (existingModifier) {
+        // Add to existing modifier
+        if (!existingModifier.items[newClothingBodyPart]) {
+          existingModifier.items[newClothingBodyPart] = [];
+        }
+        existingModifier.items[newClothingBodyPart]!.push(clothingItem);
+      } else {
+        // Create new modifier
+        const newModifier: RainModifier = {
+          minRainProbability,
+          maxRainProbability,
+          maxTemp,
+          items: {
+            [newClothingBodyPart]: [clothingItem],
+          },
+          explanation: `Rain protection`,
+        };
+        newWardrobe.rainModifiers.push(newModifier);
+      }
+    }
+
+    const updatedWardrobes = [...wardrobes];
+    updatedWardrobes[wardrobeIndex] = newWardrobe;
+    setWardrobes(updatedWardrobes);
+    storage.setWardrobes(updatedWardrobes);
+    
+    // Reset form
+    setNewClothingName('');
+    setNewClothingBodyPart('chest');
+    setNewClothingType('temp');
+    setNewClothingMinTemp('');
+    setNewClothingMaxTemp('');
+    setNewClothingMinWind('');
+    setNewClothingMinRain('');
+    setNewClothingMaxRain('');
+    setNewClothingMaxTempRain('');
+    setShowAddFirstClothingModal(false);
   };
 
   const handleCreateWardrobe = () => {
@@ -238,38 +438,121 @@ export function ClothingGuide({}: GuideProps) {
     }));
   };
 
-  // Generate scenarios for temperature variations
+  // Generate scenarios for temperature variations based on wardrobe ranges
   const generateTemperatureScenarios = () => {
-    const temps = [25, 20, 16, 12, 8, 5, 2, -1, -3, -6];
     const scenarios: Array<{
-      temp: number;
+      minTemp: number;
+      maxTemp: number;
+      temp: number; // For backward compatibility
       wind: number;
       rain: number;
       weather: WeatherSummary;
       config: RideConfig;
     }> = [];
 
-    temps.forEach(temp => {
-      const weather: WeatherSummary = {
-        minTemp: temp,
-        maxTemp: temp + 2,
-        minFeelsLike: temp,
-        maxFeelsLike: temp + 2,
-        maxWindSpeed: 10, // Low wind
-        maxRainProbability: 0, // No rain
-        maxPrecipitationIntensity: 0,
-      };
+    // If no ranges exist, return empty array - always base ranges on wardrobe items
+    if (currentWardrobe.temperatureRanges.length === 0) {
+      return scenarios;
+    }
 
-      const config: RideConfig = {
-        startTime: new Date(),
-        durationHours: 2,
-        units,
-      };
-
-      scenarios.push({ temp, wind: 10, rain: 0, weather, config });
+    // Collect all unique temperature breakpoints ONLY from ranges that have items
+    const tempBreakpoints = new Set<number>();
+    
+    // First, filter ranges to only those that have items
+    const rangesWithItems = currentWardrobe.temperatureRanges.filter(range => {
+      const bodyParts: Array<'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet'> = 
+        ['head', 'neckFace', 'chest', 'legs', 'hands', 'feet'];
+      for (const part of bodyParts) {
+        const partItems = range.items[part] || [];
+        if (partItems.length > 0) {
+          for (const item of partItems) {
+            if (typeof item === 'string' && item.trim()) {
+              return true;
+            } else if (typeof item === 'object' && item !== null && 'options' in item) {
+              for (const option of item.options) {
+                if (option.length > 0 && option.some((opt: string) => opt.trim())) {
+                  return true;
+                }
+              }
+            }
+          }
+        }
+      }
+      return false;
+    });
+    
+    // Only collect breakpoints from ranges that have items
+    rangesWithItems.forEach(range => {
+      // Add minTemp if it exists (null means no lower bound)
+      if (range.minTemp !== null && range.minTemp !== undefined) {
+        tempBreakpoints.add(range.minTemp);
+      }
+      // Add maxTemp if it exists (null/undefined means no upper bound)
+      if (range.maxTemp !== null && range.maxTemp !== undefined) {
+        tempBreakpoints.add(range.maxTemp);
+      }
     });
 
-    return scenarios;
+    // Sort breakpoints descending (hot to cold)
+    const sortedBreakpoints = Array.from(tempBreakpoints).sort((a, b) => b - a);
+
+    // Create segments between consecutive breakpoints
+    // Each segment represents a temperature range where a specific set of clothing ranges apply
+    for (let i = 0; i < sortedBreakpoints.length; i++) {
+      const segmentMaxTemp = sortedBreakpoints[i];
+      // The minTemp of a segment is the next breakpoint (or extend below if it's the last one)
+      const segmentMinTemp = i < sortedBreakpoints.length - 1 
+        ? sortedBreakpoints[i + 1] // Use the next breakpoint as the lower bound
+        : sortedBreakpoints[sortedBreakpoints.length - 1] - 10; // Extend 10°C below the coldest breakpoint if last segment
+      
+      // Only create segment if it has a meaningful range
+      if (segmentMaxTemp > segmentMinTemp) {
+        // Use a representative temperature in the middle of the segment
+        // Add small offset to ensure it's above any minTemp boundary (matching uses temp > minTemp)
+        const representativeTemp = Math.max(segmentMinTemp + 0.1, (segmentMinTemp + segmentMaxTemp) / 2);
+        
+        // Check which ranges apply to this segment by testing if the representative temp matches
+        // Only check ranges that have items
+        const applicableRanges = rangesWithItems.filter(range => {
+          // Use the same matching logic as clothingEngine
+          const minMatch = range.minTemp === null || representativeTemp > range.minTemp;
+          const maxMatch = range.maxTemp === null || range.maxTemp === undefined || representativeTemp <= range.maxTemp;
+          return minMatch && maxMatch;
+        });
+        
+        // Only create scenario if at least one range applies (they all have items by definition)
+        if (applicableRanges.length > 0) {
+          const weather: WeatherSummary = {
+            minTemp: representativeTemp,
+            maxTemp: representativeTemp + 1,
+            minFeelsLike: representativeTemp,
+            maxFeelsLike: representativeTemp + 1,
+            maxWindSpeed: 10, // Low wind
+            maxRainProbability: 0, // No rain
+            maxPrecipitationIntensity: 0,
+          };
+
+          const config: RideConfig = {
+            startTime: new Date(),
+            durationHours: 2,
+            units,
+          };
+
+          scenarios.push({ 
+            minTemp: segmentMinTemp, // Use exact breakpoint value from wardrobe (already in metric)
+            maxTemp: segmentMaxTemp, // Use exact breakpoint value from wardrobe (already in metric)
+            temp: Math.round(representativeTemp), 
+            wind: 10, 
+            rain: 0, 
+            weather, 
+            config 
+          });
+        }
+      }
+    }
+
+    // Sort scenarios by maxTemp descending (hot to cold)
+    return scenarios.sort((a, b) => b.maxTemp - a.maxTemp);
   };
 
   // Helper to flatten ClothingItem[] to string[] for comparison (shared across functions)
@@ -286,6 +569,538 @@ export function ClothingGuide({}: GuideProps) {
       }
     });
     return result;
+  };
+
+  // Helper to find where an item is stored in the wardrobe
+  const findItemLocation = (
+    itemName: string,
+    bodyPart: 'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet'
+  ): { type: 'temp' | 'wind' | 'rain'; rangeIndex?: number; modifierIndex?: number } | null => {
+    // Check temperature ranges
+    for (let i = 0; i < currentWardrobe.temperatureRanges.length; i++) {
+      const range = currentWardrobe.temperatureRanges[i];
+      const items = range.items[bodyPart] || [];
+      for (const item of items) {
+        if (typeof item === 'string' && item === itemName) {
+          return { type: 'temp', rangeIndex: i };
+        } else if (typeof item === 'object' && item !== null && 'options' in item) {
+          for (const option of item.options) {
+            if (option.includes(itemName)) {
+              return { type: 'temp', rangeIndex: i };
+            }
+          }
+        }
+      }
+    }
+
+    // Check wind modifiers
+    for (let i = 0; i < currentWardrobe.windModifiers.length; i++) {
+      const modifier = currentWardrobe.windModifiers[i];
+      const items = modifier.items[bodyPart] || [];
+      for (const item of items) {
+        if (typeof item === 'string' && item === itemName) {
+          return { type: 'wind', modifierIndex: i };
+        } else if (typeof item === 'object' && item !== null && 'options' in item) {
+          for (const option of item.options) {
+            if (option.includes(itemName)) {
+              return { type: 'wind', modifierIndex: i };
+            }
+          }
+        }
+      }
+    }
+
+    // Check rain modifiers
+    for (let i = 0; i < currentWardrobe.rainModifiers.length; i++) {
+      const modifier = currentWardrobe.rainModifiers[i];
+      const items = modifier.items[bodyPart] || [];
+      for (const item of items) {
+        if (typeof item === 'string' && item === itemName) {
+          return { type: 'rain', modifierIndex: i };
+        } else if (typeof item === 'object' && item !== null && 'options' in item) {
+          for (const option of item.options) {
+            if (option.includes(itemName)) {
+              return { type: 'rain', modifierIndex: i };
+            }
+          }
+        }
+      }
+    }
+
+    return null;
+  };
+
+  // Handle edit item
+  const handleEditItem = (itemName: string, bodyPart: 'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet') => {
+    const location = findItemLocation(itemName, bodyPart);
+    if (location) {
+      setEditItemName(itemName);
+      setEditItemBodyPart(bodyPart);
+      setEditItemType(location.type);
+      
+      // Load current values based on location
+      if (location.type === 'temp' && location.rangeIndex !== undefined) {
+        const range = currentWardrobe.temperatureRanges[location.rangeIndex];
+        setEditItemMinTemp(range.minTemp?.toString() || '');
+        setEditItemMaxTemp(range.maxTemp?.toString() || '');
+        setEditItemMinWind('');
+        setEditItemMinRain('');
+        setEditItemMaxRain('');
+        setEditItemMaxTempRain('');
+      } else if (location.type === 'wind' && location.modifierIndex !== undefined) {
+        const modifier = currentWardrobe.windModifiers[location.modifierIndex];
+        setEditItemMinWind(modifier.minWindSpeed?.toString() || '');
+        setEditItemMinTemp('');
+        setEditItemMaxTemp('');
+        setEditItemMinRain('');
+        setEditItemMaxRain('');
+        setEditItemMaxTempRain('');
+      } else if (location.type === 'rain' && location.modifierIndex !== undefined) {
+        const modifier = currentWardrobe.rainModifiers[location.modifierIndex];
+        setEditItemMinRain(modifier.minRainProbability?.toString() || '');
+        setEditItemMaxRain(modifier.maxRainProbability?.toString() || '');
+        setEditItemMaxTempRain(modifier.maxTemp?.toString() || '');
+        setEditItemMinTemp('');
+        setEditItemMaxTemp('');
+        setEditItemMinWind('');
+      }
+      
+      setEditingItem({
+        item: itemName,
+        bodyPart,
+        type: location.type,
+        rangeIndex: location.rangeIndex,
+        modifierIndex: location.modifierIndex,
+      });
+    }
+  };
+
+  // Handle save edited item
+  const handleSaveEditItem = () => {
+    if (!editingItem || !editItemName.trim()) return;
+
+    const updatedWardrobes = wardrobes.map(wardrobe => {
+      if (wardrobe.id !== currentWardrobe.id) return wardrobe;
+
+      const updated = { ...wardrobe };
+      const bodyPartChanged = editingItem.bodyPart !== editItemBodyPart;
+      const oldBodyPart = editingItem.bodyPart;
+      const newBodyPart = editItemBodyPart;
+
+      if (editingItem.type === 'temp' && editingItem.rangeIndex !== undefined) {
+        // Update temperature range if changed
+        const minTemp = editItemMinTemp ? parseFloat(editItemMinTemp) : null;
+        const maxTemp = editItemMaxTemp ? parseFloat(editItemMaxTemp) : null;
+        
+        updated.temperatureRanges = updated.temperatureRanges.map((r, idx) => {
+          if (idx !== editingItem.rangeIndex) return r;
+          
+          const newItems = { ...r.items };
+          
+          // Remove item from old body part
+          const oldBodyPartItems = r.items[oldBodyPart] || [];
+          newItems[oldBodyPart] = oldBodyPartItems.filter(item => {
+            if (typeof item === 'string') {
+              return item !== editingItem.item;
+            } else if (typeof item === 'object' && item !== null && 'options' in item) {
+              // Filter out the item from options
+              const filteredOptions = item.options.map(option => 
+                option.filter(opt => opt !== editingItem.item)
+              ).filter(option => option.length > 0);
+              // Remove the entire option group if it becomes empty or no longer contains the item
+              return filteredOptions.length > 0 && item.options.some(option => option.includes(editingItem.item));
+            }
+            return true;
+          });
+          
+          // If body part changed, add to new body part
+          if (bodyPartChanged) {
+            const newBodyPartItems = r.items[newBodyPart] || [];
+            // Check if item already exists in new body part
+            const itemExists = newBodyPartItems.some(item => {
+              if (typeof item === 'string') return item === editItemName;
+              if (typeof item === 'object' && item !== null && 'options' in item) {
+                return item.options.some(option => option.includes(editItemName));
+              }
+              return false;
+            });
+            if (!itemExists) {
+              newItems[newBodyPart] = [...newBodyPartItems, editItemName];
+            } else {
+              newItems[newBodyPart] = newBodyPartItems;
+            }
+          } else {
+            // Same body part - update name if changed
+            if (editItemName !== editingItem.item) {
+              newItems[oldBodyPart] = (newItems[oldBodyPart] || []).map(item => {
+                if (typeof item === 'string' && item === editingItem.item) {
+                  return editItemName;
+                } else if (typeof item === 'object' && item !== null && 'options' in item) {
+                  return {
+                    options: item.options.map(option => 
+                      option.map(opt => opt === editingItem.item ? editItemName : opt)
+                    )
+                  };
+                }
+                return item;
+              });
+              // If item was completely removed, add it back with new name
+              const stillExists = newItems[oldBodyPart].some(item => {
+                if (typeof item === 'string') return item === editItemName;
+                if (typeof item === 'object' && item !== null && 'options' in item) {
+                  return item.options.some(option => option.includes(editItemName));
+                }
+                return false;
+              });
+              if (!stillExists) {
+                newItems[oldBodyPart] = [...(newItems[oldBodyPart] || []), editItemName];
+              }
+            } else {
+              // Name unchanged, just ensure item is still there
+              const stillExists = newItems[oldBodyPart].some(item => {
+                if (typeof item === 'string') return item === editingItem.item;
+                if (typeof item === 'object' && item !== null && 'options' in item) {
+                  return item.options.some(option => option.includes(editingItem.item));
+                }
+                return false;
+              });
+              if (!stillExists) {
+                newItems[oldBodyPart] = [...(newItems[oldBodyPart] || []), editingItem.item];
+              }
+            }
+          }
+          
+          return {
+            ...r,
+            minTemp: minTemp ?? r.minTemp,
+            maxTemp: maxTemp ?? r.maxTemp,
+            items: newItems
+          };
+        });
+      } else if (editingItem.type === 'wind' && editingItem.modifierIndex !== undefined) {
+        updated.windModifiers = updated.windModifiers.map((m, idx) => {
+          if (idx !== editingItem.modifierIndex) return m;
+          
+          const newItems = { ...m.items };
+          
+          // Remove item from old body part
+          const oldBodyPartItems = m.items[oldBodyPart] || [];
+          newItems[oldBodyPart] = oldBodyPartItems.filter(item => {
+            if (typeof item === 'string') {
+              return item !== editingItem.item;
+            } else if (typeof item === 'object' && item !== null && 'options' in item) {
+              const filteredOptions = item.options.map(option => 
+                option.filter(opt => opt !== editingItem.item)
+              ).filter(option => option.length > 0);
+              return filteredOptions.length > 0 && item.options.some(option => option.includes(editingItem.item));
+            }
+            return true;
+          });
+          
+          // If body part changed, add to new body part
+          if (bodyPartChanged) {
+            const newBodyPartItems = m.items[newBodyPart] || [];
+            const itemExists = newBodyPartItems.some(item => {
+              if (typeof item === 'string') return item === editItemName;
+              if (typeof item === 'object' && item !== null && 'options' in item) {
+                return item.options.some(option => option.includes(editItemName));
+              }
+              return false;
+            });
+            if (!itemExists) {
+              newItems[newBodyPart] = [...newBodyPartItems, editItemName];
+            } else {
+              newItems[newBodyPart] = newBodyPartItems;
+            }
+          } else {
+            // Same body part - update name if changed
+            if (editItemName !== editingItem.item) {
+              newItems[oldBodyPart] = (newItems[oldBodyPart] || []).map(item => {
+                if (typeof item === 'string' && item === editingItem.item) {
+                  return editItemName;
+                } else if (typeof item === 'object' && item !== null && 'options' in item) {
+                  return {
+                    options: item.options.map(option => 
+                      option.map(opt => opt === editingItem.item ? editItemName : opt)
+                    )
+                  };
+                }
+                return item;
+              });
+              const stillExists = newItems[oldBodyPart].some(item => {
+                if (typeof item === 'string') return item === editItemName;
+                if (typeof item === 'object' && item !== null && 'options' in item) {
+                  return item.options.some(option => option.includes(editItemName));
+                }
+                return false;
+              });
+              if (!stillExists) {
+                newItems[oldBodyPart] = [...(newItems[oldBodyPart] || []), editItemName];
+              }
+            } else {
+              const stillExists = newItems[oldBodyPart].some(item => {
+                if (typeof item === 'string') return item === editingItem.item;
+                if (typeof item === 'object' && item !== null && 'options' in item) {
+                  return item.options.some(option => option.includes(editingItem.item));
+                }
+                return false;
+              });
+              if (!stillExists) {
+                newItems[oldBodyPart] = [...(newItems[oldBodyPart] || []), editingItem.item];
+              }
+            }
+          }
+          
+          return {
+            ...m,
+            minWindSpeed: editItemMinWind ? parseFloat(editItemMinWind) : m.minWindSpeed,
+            items: newItems
+          };
+        });
+      } else if (editingItem.type === 'rain' && editingItem.modifierIndex !== undefined) {
+        updated.rainModifiers = updated.rainModifiers.map((m, idx) => {
+          if (idx !== editingItem.modifierIndex) return m;
+          
+          const newItems = { ...m.items };
+          
+          // Remove item from old body part
+          const oldBodyPartItems = m.items[oldBodyPart] || [];
+          newItems[oldBodyPart] = oldBodyPartItems.filter(item => {
+            if (typeof item === 'string') {
+              return item !== editingItem.item;
+            } else if (typeof item === 'object' && item !== null && 'options' in item) {
+              const filteredOptions = item.options.map(option => 
+                option.filter(opt => opt !== editingItem.item)
+              ).filter(option => option.length > 0);
+              return filteredOptions.length > 0 && item.options.some(option => option.includes(editingItem.item));
+            }
+            return true;
+          });
+          
+          // If body part changed, add to new body part
+          if (bodyPartChanged) {
+            const newBodyPartItems = m.items[newBodyPart] || [];
+            const itemExists = newBodyPartItems.some(item => {
+              if (typeof item === 'string') return item === editItemName;
+              if (typeof item === 'object' && item !== null && 'options' in item) {
+                return item.options.some(option => option.includes(editItemName));
+              }
+              return false;
+            });
+            if (!itemExists) {
+              newItems[newBodyPart] = [...newBodyPartItems, editItemName];
+            } else {
+              newItems[newBodyPart] = newBodyPartItems;
+            }
+          } else {
+            // Same body part - update name if changed
+            if (editItemName !== editingItem.item) {
+              newItems[oldBodyPart] = (newItems[oldBodyPart] || []).map(item => {
+                if (typeof item === 'string' && item === editingItem.item) {
+                  return editItemName;
+                } else if (typeof item === 'object' && item !== null && 'options' in item) {
+                  return {
+                    options: item.options.map(option => 
+                      option.map(opt => opt === editingItem.item ? editItemName : opt)
+                    )
+                  };
+                }
+                return item;
+              });
+              const stillExists = newItems[oldBodyPart].some(item => {
+                if (typeof item === 'string') return item === editItemName;
+                if (typeof item === 'object' && item !== null && 'options' in item) {
+                  return item.options.some(option => option.includes(editItemName));
+                }
+                return false;
+              });
+              if (!stillExists) {
+                newItems[oldBodyPart] = [...(newItems[oldBodyPart] || []), editItemName];
+              }
+            } else {
+              const stillExists = newItems[oldBodyPart].some(item => {
+                if (typeof item === 'string') return item === editingItem.item;
+                if (typeof item === 'object' && item !== null && 'options' in item) {
+                  return item.options.some(option => option.includes(editingItem.item));
+                }
+                return false;
+              });
+              if (!stillExists) {
+                newItems[oldBodyPart] = [...(newItems[oldBodyPart] || []), editingItem.item];
+              }
+            }
+          }
+          
+          return {
+            ...m,
+            minRainProbability: editItemMinRain ? parseFloat(editItemMinRain) / 100 : m.minRainProbability,
+            maxRainProbability: editItemMaxRain ? parseFloat(editItemMaxRain) / 100 : m.maxRainProbability,
+            maxTemp: editItemMaxTempRain ? parseFloat(editItemMaxTempRain) : m.maxTemp,
+            items: newItems
+          };
+        });
+      }
+
+      return updated;
+    });
+
+    setWardrobes(updatedWardrobes);
+    storage.setWardrobes(updatedWardrobes);
+    setEditingItem(null);
+    setEditItemName('');
+  };
+
+  // Render item with edit controls
+  const renderItemWithControls = (
+    item: ClothingItem,
+    idx: number,
+    bodyPart: 'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet'
+  ) => {
+    // Check if this is an options group
+    if (typeof item === 'object' && item !== null && 'options' in item) {
+      const options = (item as { options: string[][] }).options;
+      return (
+        <Fragment key={idx}>
+          {options.map((optionItems, optionIdx) => (
+            <Fragment key={optionIdx}>
+              {optionIdx > 0 && (
+                <li key={`or-${optionIdx}`} className="option-divider">
+                  <span className="option-or">OR</span>
+                </li>
+              )}
+              {optionItems.map((optionItem, itemIdx) => (
+                <li key={`${optionIdx}-${itemIdx}`} className={`${optionIdx > 0 ? "option-item" : ""} ${isEditMode ? "edit-mode-item" : ""}`}>
+                  <span>{optionItem}</span>
+                  {isEditMode && (
+                    <div className="item-actions">
+                      <button
+                        className="btn-edit-item"
+                        onClick={() => handleEditItem(optionItem, bodyPart)}
+                        aria-label="Edit item"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M8.84 2.4L13.6 7.16L5.6 15.16H0.8V10.4L8.84 2.4ZM9.84 1.4L11.28 0L16 4.72L14.6 6.16L9.84 1.4Z" fill="currentColor"/>
+                        </svg>
+                      </button>
+                      <button
+                        className="btn-delete-item"
+                        onClick={() => handleDeleteItem(optionItem, bodyPart)}
+                        aria-label="Delete item"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M2 4H14M6 4V2C6 1.44772 6.44772 1 7 1H9C9.55228 1 10 1.44772 10 2V4M12 4V14C12 14.5523 11.5523 15 11 15H5C4.44772 15 4 14.5523 4 14V4H12Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </Fragment>
+          ))}
+        </Fragment>
+      );
+    }
+    return (
+      <li key={idx} className={isEditMode ? "edit-mode-item" : ""}>
+        <span>{item}</span>
+        {isEditMode && (
+          <div className="item-actions">
+            <button
+              className="btn-edit-item"
+              onClick={() => handleEditItem(item, bodyPart)}
+              aria-label="Edit item"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8.84 2.4L13.6 7.16L5.6 15.16H0.8V10.4L8.84 2.4ZM9.84 1.4L11.28 0L16 4.72L14.6 6.16L9.84 1.4Z" fill="currentColor"/>
+              </svg>
+            </button>
+            <button
+              className="btn-delete-item"
+              onClick={() => handleDeleteItem(item, bodyPart)}
+              aria-label="Delete item"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 4H14M6 4V2C6 1.44772 6.44772 1 7 1H9C9.55228 1 10 1.44772 10 2V4M12 4V14C12 14.5523 11.5523 15 11 15H5C4.44772 15 4 14.5523 4 14V4H12Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        )}
+      </li>
+    );
+  };
+
+  // Handle delete item
+  const handleDeleteItem = (itemName: string, bodyPart: 'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet') => {
+    const location = findItemLocation(itemName, bodyPart);
+    if (!location) return;
+
+    const updatedWardrobes = wardrobes.map(wardrobe => {
+      if (wardrobe.id !== currentWardrobe.id) return wardrobe;
+
+      const updated = { ...wardrobe };
+
+      if (location.type === 'temp' && location.rangeIndex !== undefined) {
+        const range = updated.temperatureRanges[location.rangeIndex];
+        const items = range.items[bodyPart] || [];
+        const updatedItems = items.filter(item => {
+          if (typeof item === 'string') {
+            return item !== itemName;
+          } else if (typeof item === 'object' && item !== null && 'options' in item) {
+            // Remove item from options, or remove entire option group if empty
+            const filteredOptions = item.options.map(option => option.filter(opt => opt !== itemName)).filter(option => option.length > 0);
+            if (filteredOptions.length === 0) {
+              return false; // Remove this option group
+            }
+            return { options: filteredOptions };
+          }
+          return true;
+        });
+        updated.temperatureRanges = updated.temperatureRanges.map((r, idx) =>
+          idx === location.rangeIndex ? { ...r, items: { ...r.items, [bodyPart]: updatedItems } } : r
+        );
+      } else if (location.type === 'wind' && location.modifierIndex !== undefined) {
+        const modifier = updated.windModifiers[location.modifierIndex];
+        const items = modifier.items[bodyPart] || [];
+        const updatedItems = items.filter(item => {
+          if (typeof item === 'string') {
+            return item !== itemName;
+          } else if (typeof item === 'object' && item !== null && 'options' in item) {
+            const filteredOptions = item.options.map(option => option.filter(opt => opt !== itemName)).filter(option => option.length > 0);
+            if (filteredOptions.length === 0) {
+              return false;
+            }
+            return { options: filteredOptions };
+          }
+          return true;
+        });
+        updated.windModifiers = updated.windModifiers.map((m, idx) =>
+          idx === location.modifierIndex ? { ...m, items: { ...m.items, [bodyPart]: updatedItems } } : m
+        );
+      } else if (location.type === 'rain' && location.modifierIndex !== undefined) {
+        const modifier = updated.rainModifiers[location.modifierIndex];
+        const items = modifier.items[bodyPart] || [];
+        const updatedItems = items.filter(item => {
+          if (typeof item === 'string') {
+            return item !== itemName;
+          } else if (typeof item === 'object' && item !== null && 'options' in item) {
+            const filteredOptions = item.options.map(option => option.filter(opt => opt !== itemName)).filter(option => option.length > 0);
+            if (filteredOptions.length === 0) {
+              return false;
+            }
+            return { options: filteredOptions };
+          }
+          return true;
+        });
+        updated.rainModifiers = updated.rainModifiers.map((m, idx) =>
+          idx === location.modifierIndex ? { ...m, items: { ...m.items, [bodyPart]: updatedItems } } : m
+        );
+      }
+
+      return updated;
+    });
+
+    setWardrobes(updatedWardrobes);
+    storage.setWardrobes(updatedWardrobes);
   };
 
   // Generate scenarios for wind variations - only show unique recommendations
@@ -449,7 +1264,7 @@ export function ClothingGuide({}: GuideProps) {
     return scenarios;
   };
 
-  const tempScenarios = useMemo(() => generateTemperatureScenarios(), [units]);
+  const tempScenarios = useMemo(() => generateTemperatureScenarios(), [units, currentWardrobe]);
   const windScenarios = useMemo(() => generateWindScenarios(), [units]);
   const rainScenarios = useMemo(() => generateRainScenarios(), [units]);
   const tempUnit = units === 'metric' ? '°C' : '°F';
@@ -932,6 +1747,12 @@ export function ClothingGuide({}: GuideProps) {
           <p className="empty-wardrobe-text">
             Start adding clothes by clicking the menu button (⋮) next to your wardrobe name above, then select "Add clothing piece".
           </p>
+          <button
+            className="btn btn-primary empty-wardrobe-button"
+            onClick={() => setShowAddFirstClothingModal(true)}
+          >
+            Add your first piece of clothing
+          </button>
         </div>
       )}
 
@@ -964,31 +1785,7 @@ export function ClothingGuide({}: GuideProps) {
                       />
                     </div>
                     <ul className="item-group-list">
-                      {group.items.map((item, idx) => {
-                        // Check if this is an options group
-                        if (typeof item === 'object' && item !== null && 'options' in item) {
-                          const options = (item as { options: string[][] }).options;
-                          return (
-                            <Fragment key={idx}>
-                              {options.map((optionItems, optionIdx) => (
-                                <Fragment key={optionIdx}>
-                                  {optionIdx > 0 && (
-                                    <li key={`or-${optionIdx}`} className="option-divider">
-                                      <span className="option-or">OR</span>
-                                    </li>
-                                  )}
-                                  {optionItems.map((optionItem, itemIdx) => (
-                                    <li key={`${optionIdx}-${itemIdx}`} className={optionIdx > 0 ? "option-item" : ""}>
-                                      {optionItem}
-                                    </li>
-                                  ))}
-                                </Fragment>
-                              ))}
-                            </Fragment>
-                          );
-                        }
-                        return <li key={idx}>{item}</li>;
-                      })}
+                      {group.items.map((item, idx) => renderItemWithControls(item, idx, 'head'))}
                     </ul>
                   </div>
                 ))}
@@ -1008,31 +1805,7 @@ export function ClothingGuide({}: GuideProps) {
                       />
                     </div>
                     <ul className="item-group-list">
-                      {group.items.map((item, idx) => {
-                        // Check if this is an options group
-                        if (typeof item === 'object' && item !== null && 'options' in item) {
-                          const options = (item as { options: string[][] }).options;
-                          return (
-                            <Fragment key={idx}>
-                              {options.map((optionItems, optionIdx) => (
-                                <Fragment key={optionIdx}>
-                                  {optionIdx > 0 && (
-                                    <li key={`or-${optionIdx}`} className="option-divider">
-                                      <span className="option-or">OR</span>
-                                    </li>
-                                  )}
-                                  {optionItems.map((optionItem, itemIdx) => (
-                                    <li key={`${optionIdx}-${itemIdx}`} className={optionIdx > 0 ? "option-item" : ""}>
-                                      {optionItem}
-                                    </li>
-                                  ))}
-                                </Fragment>
-                              ))}
-                            </Fragment>
-                          );
-                        }
-                        return <li key={idx}>{item}</li>;
-                      })}
+                      {group.items.map((item, idx) => renderItemWithControls(item, idx, 'chest'))}
                     </ul>
                   </div>
                 ))}
@@ -1052,31 +1825,7 @@ export function ClothingGuide({}: GuideProps) {
                       />
                     </div>
                     <ul className="item-group-list">
-                      {group.items.map((item, idx) => {
-                        // Check if this is an options group
-                        if (typeof item === 'object' && item !== null && 'options' in item) {
-                          const options = (item as { options: string[][] }).options;
-                          return (
-                            <Fragment key={idx}>
-                              {options.map((optionItems, optionIdx) => (
-                                <Fragment key={optionIdx}>
-                                  {optionIdx > 0 && (
-                                    <li key={`or-${optionIdx}`} className="option-divider">
-                                      <span className="option-or">OR</span>
-                                    </li>
-                                  )}
-                                  {optionItems.map((optionItem, itemIdx) => (
-                                    <li key={`${optionIdx}-${itemIdx}`} className={optionIdx > 0 ? "option-item" : ""}>
-                                      {optionItem}
-                                    </li>
-                                  ))}
-                                </Fragment>
-                              ))}
-                            </Fragment>
-                          );
-                        }
-                        return <li key={idx}>{item}</li>;
-                      })}
+                      {group.items.map((item, idx) => renderItemWithControls(item, idx, 'chest'))}
                     </ul>
                   </div>
                 ))}
@@ -1096,31 +1845,7 @@ export function ClothingGuide({}: GuideProps) {
                       />
                     </div>
                     <ul className="item-group-list">
-                      {group.items.map((item, idx) => {
-                        // Check if this is an options group
-                        if (typeof item === 'object' && item !== null && 'options' in item) {
-                          const options = (item as { options: string[][] }).options;
-                          return (
-                            <Fragment key={idx}>
-                              {options.map((optionItems, optionIdx) => (
-                                <Fragment key={optionIdx}>
-                                  {optionIdx > 0 && (
-                                    <li key={`or-${optionIdx}`} className="option-divider">
-                                      <span className="option-or">OR</span>
-                                    </li>
-                                  )}
-                                  {optionItems.map((optionItem, itemIdx) => (
-                                    <li key={`${optionIdx}-${itemIdx}`} className={optionIdx > 0 ? "option-item" : ""}>
-                                      {optionItem}
-                                    </li>
-                                  ))}
-                                </Fragment>
-                              ))}
-                            </Fragment>
-                          );
-                        }
-                        return <li key={idx}>{item}</li>;
-                      })}
+                      {group.items.map((item, idx) => renderItemWithControls(item, idx, 'legs'))}
                     </ul>
                   </div>
                 ))}
@@ -1140,31 +1865,7 @@ export function ClothingGuide({}: GuideProps) {
                       />
                     </div>
                     <ul className="item-group-list">
-                      {group.items.map((item, idx) => {
-                        // Check if this is an options group
-                        if (typeof item === 'object' && item !== null && 'options' in item) {
-                          const options = (item as { options: string[][] }).options;
-                          return (
-                            <Fragment key={idx}>
-                              {options.map((optionItems, optionIdx) => (
-                                <Fragment key={optionIdx}>
-                                  {optionIdx > 0 && (
-                                    <li key={`or-${optionIdx}`} className="option-divider">
-                                      <span className="option-or">OR</span>
-                                    </li>
-                                  )}
-                                  {optionItems.map((optionItem, itemIdx) => (
-                                    <li key={`${optionIdx}-${itemIdx}`} className={optionIdx > 0 ? "option-item" : ""}>
-                                      {optionItem}
-                                    </li>
-                                  ))}
-                                </Fragment>
-                              ))}
-                            </Fragment>
-                          );
-                        }
-                        return <li key={idx}>{item}</li>;
-                      })}
+                      {group.items.map((item, idx) => renderItemWithControls(item, idx, 'hands'))}
                     </ul>
                   </div>
                 ))}
@@ -1184,31 +1885,7 @@ export function ClothingGuide({}: GuideProps) {
                       />
                     </div>
                     <ul className="item-group-list">
-                      {group.items.map((item, idx) => {
-                        // Check if this is an options group
-                        if (typeof item === 'object' && item !== null && 'options' in item) {
-                          const options = (item as { options: string[][] }).options;
-                          return (
-                            <Fragment key={idx}>
-                              {options.map((optionItems, optionIdx) => (
-                                <Fragment key={optionIdx}>
-                                  {optionIdx > 0 && (
-                                    <li key={`or-${optionIdx}`} className="option-divider">
-                                      <span className="option-or">OR</span>
-                                    </li>
-                                  )}
-                                  {optionItems.map((optionItem, itemIdx) => (
-                                    <li key={`${optionIdx}-${itemIdx}`} className={optionIdx > 0 ? "option-item" : ""}>
-                                      {optionItem}
-                                    </li>
-                                  ))}
-                                </Fragment>
-                              ))}
-                            </Fragment>
-                          );
-                        }
-                        return <li key={idx}>{item}</li>;
-                      })}
+                      {group.items.map((item, idx) => renderItemWithControls(item, idx, 'feet'))}
                     </ul>
                   </div>
                 ))}
@@ -1235,30 +1912,52 @@ export function ClothingGuide({}: GuideProps) {
           <>
             <p className="section-description">Low wind (10 {windUnit}), no rain</p>
             <div className="guide-scenarios guide-scenarios-temperature">
-          {tempScenarios.map((scenario, idx) => {
-            const recommendation = recommendClothing(scenario.weather, scenario.config);
-            
-            return (
-              <div key={idx} className="guide-scenario">
-                <div className="scenario-header">
-                  <div className="scenario-conditions">
-                    <span className="condition-badge temp">
-                      {formatTemp(scenario.temp)}
-                    </span>
+          {tempScenarios
+            .map((scenario) => {
+              // Use the representative temperature from the scenario's weather
+              // This is already calculated to be slightly above segmentMinTemp to match ranges
+              const recommendation = recommendClothing(scenario.weather, scenario.config);
+              return { scenario, recommendation };
+            })
+            .map(({ scenario, recommendation }, idx) => {
+              // Format temperature range
+              const formatTempRange = () => {
+                if (scenario.minTemp !== undefined && scenario.maxTemp !== undefined) {
+                  // Use the exact minTemp and maxTemp values from the scenario
+                  // These values come directly from wardrobe breakpoints (already in metric)
+                  // IMPORTANT: Do not round these values - they should match exactly what's in the wardrobe
+                  // Convert to display units if needed, then round ONLY for display
+                  const minValue = units === 'metric' ? scenario.minTemp : (scenario.minTemp * 9/5) + 32;
+                  const maxValue = units === 'metric' ? scenario.maxTemp : (scenario.maxTemp * 9/5) + 32;
+                  // Round to nearest integer for display
+                  const minRounded = Math.round(minValue);
+                  const maxRounded = Math.round(maxValue);
+                  return `${minRounded}-${maxRounded}${tempUnit}`;
+                }
+                return formatTemp(scenario.temp);
+              };
+              
+              return (
+                <div key={idx} className="guide-scenario">
+                  <div className="scenario-header">
+                    <div className="scenario-conditions">
+                      <span className="condition-badge temp">
+                        {formatTempRange()}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="scenario-clothing">
+                    {renderCategory(recommendation.head, 'Head')}
+                    {renderCategory(recommendation.neckFace, 'Neck/Face')}
+                    {renderCategory(recommendation.chest, 'Chest')}
+                    {renderCategory(recommendation.legs, 'Legs')}
+                    {renderCategory(recommendation.hands, 'Hands')}
+                    {renderCategory(recommendation.feet, 'Feet')}
                   </div>
                 </div>
-
-                <div className="scenario-clothing">
-                  {renderCategory(recommendation.head, 'Head')}
-                  {renderCategory(recommendation.neckFace, 'Neck/Face')}
-                  {renderCategory(recommendation.chest, 'Chest')}
-                  {renderCategory(recommendation.legs, 'Legs')}
-                  {renderCategory(recommendation.hands, 'Hands')}
-                  {renderCategory(recommendation.feet, 'Feet')}
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
             </div>
           </>
         )}
@@ -1359,71 +2058,82 @@ export function ClothingGuide({}: GuideProps) {
           <>
             <p className="section-description">Temperature: 10{tempUnit}, low wind (10 {windUnit}) - Showing only rain-specific items</p>
             <div className="guide-scenarios guide-scenarios-rain">
-          {rainScenarios.map((scenario, idx) => {
-            // Get base recommendation without rain
-            const baseWeather: WeatherSummary = {
-              ...scenario.weather,
-              maxRainProbability: 0,
-              maxPrecipitationIntensity: 0,
-            };
-            const baseRecommendation = recommendClothing(baseWeather, scenario.config);
-            
-            // Get recommendation with rain
-            const rainRecommendation = recommendClothing(scenario.weather, scenario.config);
-            
-            // Helper to flatten ClothingItem[] to string[] for comparison
-            const flattenItemsLocal = (items: ClothingItem[]): string[] => {
-              const result: string[] = [];
-              items.forEach(item => {
-                if (typeof item === 'string') {
-                  result.push(item);
-                } else if (typeof item === 'object' && item !== null && 'options' in item) {
-                  item.options.forEach(option => {
-                    option.forEach(optItem => result.push(optItem));
-                  });
-                }
-              });
-              return result;
-            };
-            
-            // Find differences - only items added by rain
-            const getRainOnlyItems = (base: ClothingItem[], withRain: ClothingItem[]): ClothingItem[] => {
-              const baseFlat = flattenItemsLocal(base);
-              return withRain.filter(item => {
-                if (typeof item === 'string') {
-                  return !baseFlat.includes(item);
-                } else if (typeof item === 'object' && item !== null && 'options' in item) {
-                  return item.options.some(option => 
-                    option.some(optItem => !baseFlat.includes(optItem))
-                  );
-                }
-                return false;
-              });
-            };
-            
-            const rainOnly = {
-              head: getRainOnlyItems(baseRecommendation.head, rainRecommendation.head),
-              neckFace: getRainOnlyItems(baseRecommendation.neckFace, rainRecommendation.neckFace),
-              chest: getRainOnlyItems(baseRecommendation.chest, rainRecommendation.chest),
-              legs: getRainOnlyItems(baseRecommendation.legs, rainRecommendation.legs),
-              hands: getRainOnlyItems(baseRecommendation.hands, rainRecommendation.hands),
-              feet: getRainOnlyItems(baseRecommendation.feet, rainRecommendation.feet),
-            };
-            
-            // Determine the range for this recommendation
-            const getRainRange = () => {
-              if (scenario.rain === 0) return '0%';
-              if (scenario.rain <= 0.4) return `${Math.round(scenario.rain * 100)}%`;
-              if (scenario.rain <= 0.7) return '40-70%';
-              return '70%+';
-            };
-            
-            return (
+          {rainScenarios
+            .map((scenario) => {
+              // Get base recommendation without rain
+              const baseWeather: WeatherSummary = {
+                ...scenario.weather,
+                maxRainProbability: 0,
+                maxPrecipitationIntensity: 0,
+              };
+              const baseRecommendation = recommendClothing(baseWeather, scenario.config);
+              
+              // Get recommendation with rain
+              const rainRecommendation = recommendClothing(scenario.weather, scenario.config);
+              
+              // Helper to flatten ClothingItem[] to string[] for comparison
+              const flattenItemsLocal = (items: ClothingItem[]): string[] => {
+                const result: string[] = [];
+                items.forEach(item => {
+                  if (typeof item === 'string') {
+                    result.push(item);
+                  } else if (typeof item === 'object' && item !== null && 'options' in item) {
+                    item.options.forEach(option => {
+                      option.forEach(optItem => result.push(optItem));
+                    });
+                  }
+                });
+                return result;
+              };
+              
+              // Find differences - only items added by rain
+              const getRainOnlyItems = (base: ClothingItem[], withRain: ClothingItem[]): ClothingItem[] => {
+                const baseFlat = flattenItemsLocal(base);
+                return withRain.filter(item => {
+                  if (typeof item === 'string') {
+                    return !baseFlat.includes(item);
+                  } else if (typeof item === 'object' && item !== null && 'options' in item) {
+                    return item.options.some(option => 
+                      option.some(optItem => !baseFlat.includes(optItem))
+                    );
+                  }
+                  return false;
+                });
+              };
+              
+              const rainOnly = {
+                head: getRainOnlyItems(baseRecommendation.head, rainRecommendation.head),
+                neckFace: getRainOnlyItems(baseRecommendation.neckFace, rainRecommendation.neckFace),
+                chest: getRainOnlyItems(baseRecommendation.chest, rainRecommendation.chest),
+                legs: getRainOnlyItems(baseRecommendation.legs, rainRecommendation.legs),
+                hands: getRainOnlyItems(baseRecommendation.hands, rainRecommendation.hands),
+                feet: getRainOnlyItems(baseRecommendation.feet, rainRecommendation.feet),
+              };
+
+              const hasItems = rainOnly.head.length > 0 ||
+                               rainOnly.neckFace.length > 0 ||
+                               rainOnly.chest.length > 0 ||
+                               rainOnly.legs.length > 0 ||
+                               rainOnly.hands.length > 0 ||
+                               rainOnly.feet.length > 0;
+
+              // Determine the range for this recommendation
+              const getRainRange = () => {
+                if (scenario.rain === 0) return '0%';
+                if (scenario.rain <= 0.4) return `${Math.round(scenario.rain * 100)}%`;
+                if (scenario.rain <= 0.7) return '40-70%';
+                return '70%+';
+              };
+
+              return { scenario, rainOnly, hasItems, rainRange: getRainRange() };
+            })
+            .filter(({ hasItems }) => hasItems)
+            .map(({ rainOnly, rainRange }, idx) => (
               <div key={idx} className="guide-scenario">
                 <div className="scenario-header">
                   <div className="scenario-conditions">
                     <span className="condition-badge rain">
-                      {getRainRange()}
+                      {rainRange}
                     </span>
                   </div>
                 </div>
@@ -1437,8 +2147,7 @@ export function ClothingGuide({}: GuideProps) {
                   {renderCategory(rainOnly.feet, 'Feet')}
                 </div>
               </div>
-            );
-          })}
+            ))}
             </div>
           </>
         )}
@@ -1546,6 +2255,137 @@ export function ClothingGuide({}: GuideProps) {
         </div>
       )}
 
+      {/* Edit Item Modal */}
+      {editingItem && (
+        <div className="modal-overlay" onClick={() => setEditingItem(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            <h3>Edit Clothing Item</h3>
+            
+            <div className="form-group">
+              <label htmlFor="editItemName">Clothing Item Name</label>
+              <input
+                id="editItemName"
+                type="text"
+                value={editItemName}
+                onChange={(e) => setEditItemName(e.target.value)}
+                placeholder="e.g., Long-sleeve jersey"
+                autoFocus
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="editBodyPart">Body Part</label>
+              <select
+                id="editBodyPart"
+                value={editItemBodyPart}
+                onChange={(e) => setEditItemBodyPart(e.target.value as typeof editItemBodyPart)}
+              >
+                <option value="head">Head</option>
+                <option value="neckFace">Neck / Face</option>
+                <option value="chest">Chest</option>
+                <option value="legs">Legs</option>
+                <option value="hands">Hands</option>
+                <option value="feet">Feet</option>
+              </select>
+            </div>
+
+            {editItemType === 'temp' && (
+              <>
+                <div className="form-group">
+                  <label htmlFor="editMinTemp">Minimum Temperature (°C)</label>
+                  <input
+                    id="editMinTemp"
+                    type="number"
+                    value={editItemMinTemp}
+                    onChange={(e) => setEditItemMinTemp(e.target.value)}
+                    placeholder="e.g., 10"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="editMaxTemp">Maximum Temperature (°C) - Optional</label>
+                  <input
+                    id="editMaxTemp"
+                    type="number"
+                    value={editItemMaxTemp}
+                    onChange={(e) => setEditItemMaxTemp(e.target.value)}
+                    placeholder="e.g., 15 (leave empty for no upper limit)"
+                  />
+                </div>
+              </>
+            )}
+
+            {editItemType === 'wind' && (
+              <div className="form-group">
+                <label htmlFor="editMinWind">Minimum Wind Speed (km/h)</label>
+                <input
+                  id="editMinWind"
+                  type="number"
+                  value={editItemMinWind}
+                  onChange={(e) => setEditItemMinWind(e.target.value)}
+                  placeholder="e.g., 20"
+                />
+              </div>
+            )}
+
+            {editItemType === 'rain' && (
+              <>
+                <div className="form-group">
+                  <label htmlFor="editMinRain">Minimum Rain Probability (%)</label>
+                  <input
+                    id="editMinRain"
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={editItemMinRain}
+                    onChange={(e) => setEditItemMinRain(e.target.value)}
+                    placeholder="e.g., 40"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="editMaxRain">Maximum Rain Probability (%) - Optional</label>
+                  <input
+                    id="editMaxRain"
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={editItemMaxRain}
+                    onChange={(e) => setEditItemMaxRain(e.target.value)}
+                    placeholder="e.g., 70 (leave empty for no upper limit)"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="editMaxTempRain">Maximum Temperature (°C) - Optional</label>
+                  <input
+                    id="editMaxTempRain"
+                    type="number"
+                    value={editItemMaxTempRain}
+                    onChange={(e) => setEditItemMaxTempRain(e.target.value)}
+                    placeholder="e.g., 15 (leave empty for all temperatures)"
+                  />
+                </div>
+              </>
+            )}
+
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setEditingItem(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleSaveEditItem}
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add Clothing Piece Modal - Placeholder for now */}
       {showAddClothingModal && (
         <div className="modal-overlay" onClick={() => setShowAddClothingModal(false)}>
@@ -1559,6 +2399,178 @@ export function ClothingGuide({}: GuideProps) {
                 onClick={() => setShowAddClothingModal(false)}
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add First Clothing Modal */}
+      {showAddFirstClothingModal && (
+        <div className="modal-overlay" onClick={() => setShowAddFirstClothingModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            <h3>Add Your First Piece of Clothing</h3>
+            
+            <div className="form-group">
+              <label htmlFor="clothingName">Clothing Item Name</label>
+              <input
+                id="clothingName"
+                type="text"
+                value={newClothingName}
+                onChange={(e) => setNewClothingName(e.target.value)}
+                placeholder="e.g., Long-sleeve jersey"
+                autoFocus
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="bodyPart">Body Part</label>
+              <select
+                id="bodyPart"
+                value={newClothingBodyPart}
+                onChange={(e) => setNewClothingBodyPart(e.target.value as typeof newClothingBodyPart)}
+              >
+                <option value="head">Head</option>
+                <option value="neckFace">Neck / Face</option>
+                <option value="chest">Chest</option>
+                <option value="legs">Legs</option>
+                <option value="hands">Hands</option>
+                <option value="feet">Feet</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Type</label>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    checked={newClothingType === 'temp'}
+                    onChange={() => setNewClothingType('temp')}
+                  />
+                  <span>Temperature</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    checked={newClothingType === 'wind'}
+                    onChange={() => setNewClothingType('wind')}
+                  />
+                  <span>Wind</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    checked={newClothingType === 'rain'}
+                    onChange={() => setNewClothingType('rain')}
+                  />
+                  <span>Rain</span>
+                </label>
+              </div>
+            </div>
+
+            {newClothingType === 'temp' && (
+              <>
+                <div className="form-group">
+                  <label htmlFor="minTemp">Minimum Temperature (°C)</label>
+                  <input
+                    id="minTemp"
+                    type="number"
+                    value={newClothingMinTemp}
+                    onChange={(e) => setNewClothingMinTemp(e.target.value)}
+                    placeholder="e.g., 10"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="maxTemp">Maximum Temperature (°C) - Optional</label>
+                  <input
+                    id="maxTemp"
+                    type="number"
+                    value={newClothingMaxTemp}
+                    onChange={(e) => setNewClothingMaxTemp(e.target.value)}
+                    placeholder="e.g., 15 (leave empty for no upper limit)"
+                  />
+                </div>
+              </>
+            )}
+
+            {newClothingType === 'wind' && (
+              <div className="form-group">
+                <label htmlFor="minWind">Minimum Wind Speed (km/h)</label>
+                <input
+                  id="minWind"
+                  type="number"
+                  value={newClothingMinWind}
+                  onChange={(e) => setNewClothingMinWind(e.target.value)}
+                  placeholder="e.g., 20"
+                />
+              </div>
+            )}
+
+            {newClothingType === 'rain' && (
+              <>
+                <div className="form-group">
+                  <label htmlFor="minRain">Minimum Rain Probability (%)</label>
+                  <input
+                    id="minRain"
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={newClothingMinRain}
+                    onChange={(e) => setNewClothingMinRain(e.target.value)}
+                    placeholder="e.g., 40"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="maxRain">Maximum Rain Probability (%) - Optional</label>
+                  <input
+                    id="maxRain"
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={newClothingMaxRain}
+                    onChange={(e) => setNewClothingMaxRain(e.target.value)}
+                    placeholder="e.g., 70 (leave empty for no upper limit)"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="maxTempRain">Maximum Temperature (°C) - Optional</label>
+                  <input
+                    id="maxTempRain"
+                    type="number"
+                    value={newClothingMaxTempRain}
+                    onChange={(e) => setNewClothingMaxTempRain(e.target.value)}
+                    placeholder="e.g., 15 (only applies below this temp)"
+                  />
+                </div>
+              </>
+            )}
+
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  setShowAddFirstClothingModal(false);
+                  setNewClothingName('');
+                  setNewClothingBodyPart('chest');
+                  setNewClothingType('temp');
+                  setNewClothingMinTemp('');
+                  setNewClothingMaxTemp('');
+                  setNewClothingMinWind('');
+                  setNewClothingMinRain('');
+                  setNewClothingMaxRain('');
+                  setNewClothingMaxTempRain('');
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleAddFirstClothing}
+              >
+                Add Clothing
               </button>
             </div>
           </div>
