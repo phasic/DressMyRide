@@ -48,7 +48,7 @@ export type ClothingItem = string | { options: string[][] };
 export interface ClothingRecommendation {
   head: ClothingItem[];
   neckFace: ClothingItem[];
-  chest: ClothingItem[];
+  torso: ClothingItem[];
   legs: ClothingItem[];
   hands: ClothingItem[];
   feet: ClothingItem[];
@@ -74,7 +74,7 @@ export type Page = 'welcome' | 'home' | 'setup' | 'recommendation' | 'settings' 
 export interface ClothingItems {
   head?: ClothingItem[];
   neckFace?: ClothingItem[];
-  chest?: ClothingItem[];
+  torso?: ClothingItem[];
   legs?: ClothingItem[];
   hands?: ClothingItem[];
   feet?: ClothingItem[];

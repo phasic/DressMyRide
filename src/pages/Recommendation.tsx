@@ -312,10 +312,10 @@ export function Recommendation({
             </div>
           )}
 
-          {recommendation.chest.length > 0 && (
+          {recommendation.torso.length > 0 && (
             <div className="quick-kit">
-              <h3>Chest</h3>
-              {groupItemsByType(recommendation.chest, weather, config).map((group, groupIdx) => (
+              <h3>Torso</h3>
+              {groupItemsByType(recommendation.torso, weather, config).map((group, groupIdx) => (
                 <div key={groupIdx} className="item-group">
                   <div className="item-group-icon-wrapper">
                     <img 

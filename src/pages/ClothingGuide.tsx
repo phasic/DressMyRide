@@ -21,13 +21,13 @@ export function ClothingGuide({}: GuideProps) {
   const [showImportConfirm, setShowImportConfirm] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [showDeleteItemConfirm, setShowDeleteItemConfirm] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<{ name: string; bodyPart: 'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet' } | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<{ name: string; bodyPart: 'head' | 'neckFace' | 'torso' | 'legs' | 'hands' | 'feet' } | null>(null);
   const [addClothingError, setAddClothingError] = useState<string>('');
   const [editItemError, setEditItemError] = useState<string>('');
   const [newClothingName, setNewClothingName] = useState('');
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [renameWardrobeName, setRenameWardrobeName] = useState('');
-  const [newClothingBodyPart, setNewClothingBodyPart] = useState<'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet'>('chest');
+  const [newClothingBodyPart, setNewClothingBodyPart] = useState<'head' | 'neckFace' | 'torso' | 'legs' | 'hands' | 'feet'>('torso');
   const [newClothingType, setNewClothingType] = useState<'temp' | 'wind' | 'rain'>('temp');
   const [newClothingMinTemp, setNewClothingMinTemp] = useState<string>('');
   const [newClothingMaxTemp, setNewClothingMaxTemp] = useState<string>('');
@@ -44,13 +44,13 @@ export function ClothingGuide({}: GuideProps) {
   const [wardrobeSnapshot, setWardrobeSnapshot] = useState<WardrobeConfig[] | null>(null);
   const [editingItem, setEditingItem] = useState<{
     item: string;
-    bodyPart: 'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet';
+    bodyPart: 'head' | 'neckFace' | 'torso' | 'legs' | 'hands' | 'feet';
     type: 'temp' | 'wind' | 'rain';
     rangeIndex?: number;
     modifierIndex?: number;
   } | null>(null);
   const [editItemName, setEditItemName] = useState('');
-  const [editItemBodyPart, setEditItemBodyPart] = useState<'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet'>('chest');
+  const [editItemBodyPart, setEditItemBodyPart] = useState<'head' | 'neckFace' | 'torso' | 'legs' | 'hands' | 'feet'>('torso');
   const [editItemType, setEditItemType] = useState<'temp' | 'wind' | 'rain'>('temp');
   const [editItemMinTemp, setEditItemMinTemp] = useState<string>('');
   const [editItemMaxTemp, setEditItemMaxTemp] = useState<string>('');
@@ -106,7 +106,7 @@ export function ClothingGuide({}: GuideProps) {
     wardrobe.temperatureRanges.forEach(range => {
       addItems(range.items.head);
       addItems(range.items.neckFace);
-      addItems(range.items.chest);
+      addItems(range.items.torso);
       addItems(range.items.legs);
       addItems(range.items.hands);
       addItems(range.items.feet);
@@ -116,7 +116,7 @@ export function ClothingGuide({}: GuideProps) {
     wardrobe.windModifiers.forEach(modifier => {
       addItems(modifier.items.head);
       addItems(modifier.items.neckFace);
-      addItems(modifier.items.chest);
+      addItems(modifier.items.torso);
       addItems(modifier.items.legs);
       addItems(modifier.items.hands);
       addItems(modifier.items.feet);
@@ -126,7 +126,7 @@ export function ClothingGuide({}: GuideProps) {
     wardrobe.rainModifiers.forEach(modifier => {
       addItems(modifier.items.head);
       addItems(modifier.items.neckFace);
-      addItems(modifier.items.chest);
+      addItems(modifier.items.torso);
       addItems(modifier.items.legs);
       addItems(modifier.items.hands);
       addItems(modifier.items.feet);
@@ -160,8 +160,8 @@ export function ClothingGuide({}: GuideProps) {
 
   // Helper to check if a range/modifier has any items
   const hasAnyItems = (items: ClothingItems): boolean => {
-    const bodyParts: Array<'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet'> = 
-      ['head', 'neckFace', 'chest', 'legs', 'hands', 'feet'];
+    const bodyParts: Array<'head' | 'neckFace' | 'torso' | 'legs' | 'hands' | 'feet'> =
+      ['head', 'neckFace', 'torso', 'legs', 'hands', 'feet'];
     for (const part of bodyParts) {
       const partItems = items[part] || [];
       if (partItems.length > 0) {
@@ -475,7 +475,7 @@ export function ClothingGuide({}: GuideProps) {
     
     // Reset form
     setNewClothingName('');
-    setNewClothingBodyPart('chest');
+    setNewClothingBodyPart('torso');
     setNewClothingType('temp');
     setNewClothingMinTemp('');
     setNewClothingMaxTemp('');
@@ -675,8 +675,8 @@ export function ClothingGuide({}: GuideProps) {
     
     // First, filter ranges to only those that have items
     const rangesWithItems = currentWardrobe.temperatureRanges.filter(range => {
-      const bodyParts: Array<'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet'> = 
-        ['head', 'neckFace', 'chest', 'legs', 'hands', 'feet'];
+    const bodyParts: Array<'head' | 'neckFace' | 'torso' | 'legs' | 'hands' | 'feet'> =
+      ['head', 'neckFace', 'torso', 'legs', 'hands', 'feet'];
       for (const part of bodyParts) {
         const partItems = range.items[part] || [];
         if (partItems.length > 0) {
@@ -1053,7 +1053,7 @@ export function ClothingGuide({}: GuideProps) {
   // Helper to find where an item is stored in the wardrobe
   const findItemLocation = (
     itemName: string,
-    bodyPart: 'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet'
+    bodyPart: 'head' | 'neckFace' | 'torso' | 'legs' | 'hands' | 'feet'
   ): { type: 'temp' | 'wind' | 'rain'; rangeIndex?: number; modifierIndex?: number } | null => {
     // Check temperature ranges
     for (let i = 0; i < currentWardrobe.temperatureRanges.length; i++) {
@@ -1112,7 +1112,7 @@ export function ClothingGuide({}: GuideProps) {
   // Find all locations where an item appears
   const findAllItemLocations = (
     itemName: string,
-    bodyPart: 'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet'
+    bodyPart: 'head' | 'neckFace' | 'torso' | 'legs' | 'hands' | 'feet'
   ): Array<{ type: 'temp' | 'wind' | 'rain'; rangeIndex?: number; modifierIndex?: number }> => {
     const locations: Array<{ type: 'temp' | 'wind' | 'rain'; rangeIndex?: number; modifierIndex?: number }> = [];
 
@@ -1179,7 +1179,7 @@ export function ClothingGuide({}: GuideProps) {
   // Get item settings display (temp, wind, rain) - returns arrays for multiple ranges
   const getItemSettings = (
     itemName: string,
-    bodyPart: 'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet'
+    bodyPart: 'head' | 'neckFace' | 'torso' | 'legs' | 'hands' | 'feet'
   ): { temp?: string[]; wind?: string[]; rain?: string[] } => {
     const locations = findAllItemLocations(itemName, bodyPart);
     if (locations.length === 0) return {};
@@ -1243,7 +1243,7 @@ export function ClothingGuide({}: GuideProps) {
   };
 
   // Handle edit item
-  const handleEditItem = (itemName: string, bodyPart: 'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet') => {
+  const handleEditItem = (itemName: string, bodyPart: 'head' | 'neckFace' | 'torso' | 'legs' | 'hands' | 'feet') => {
     const location = findItemLocation(itemName, bodyPart);
     if (location) {
       setEditItemName(itemName);
@@ -1607,7 +1607,7 @@ export function ClothingGuide({}: GuideProps) {
     // Clear editing state - important to reset so next edit works correctly
     setEditingItem(null);
     setEditItemName('');
-    setEditItemBodyPart('chest');
+    setEditItemBodyPart('torso');
     setEditItemType('temp');
     setEditItemMinTemp('');
     setEditItemMaxTemp('');
@@ -1622,7 +1622,7 @@ export function ClothingGuide({}: GuideProps) {
   const renderItemWithControls = (
     item: ClothingItem,
     idx: number,
-    bodyPart: 'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet'
+    bodyPart: 'head' | 'neckFace' | 'torso' | 'legs' | 'hands' | 'feet'
   ) => {
     // Check if this is an options group
     if (typeof item === 'object' && item !== null && 'options' in item) {
@@ -1740,7 +1740,7 @@ export function ClothingGuide({}: GuideProps) {
   };
 
   // Handle delete item - show confirmation first
-  const handleDeleteItem = (itemName: string, bodyPart: 'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet') => {
+  const handleDeleteItem = (itemName: string, bodyPart: 'head' | 'neckFace' | 'torso' | 'legs' | 'hands' | 'feet') => {
     setItemToDelete({ name: itemName, bodyPart });
     setShowDeleteItemConfirm(true);
   };
@@ -1888,7 +1888,7 @@ export function ClothingGuide({}: GuideProps) {
       const windOnly = {
         head: getWindOnlyItems(baseRecommendation.head, windRecommendation.head),
         neckFace: getWindOnlyItems(baseRecommendation.neckFace, windRecommendation.neckFace),
-        chest: getWindOnlyItems(baseRecommendation.chest, windRecommendation.chest),
+        torso: getWindOnlyItems(baseRecommendation.torso, windRecommendation.torso),
         legs: getWindOnlyItems(baseRecommendation.legs, windRecommendation.legs),
         hands: getWindOnlyItems(baseRecommendation.hands, windRecommendation.hands),
         feet: getWindOnlyItems(baseRecommendation.feet, windRecommendation.feet),
@@ -1969,7 +1969,7 @@ export function ClothingGuide({}: GuideProps) {
       const rainOnly = {
         head: getRainOnlyItems(baseRecommendation.head, rainRecommendation.head),
         neckFace: getRainOnlyItems(baseRecommendation.neckFace, rainRecommendation.neckFace),
-        chest: getRainOnlyItems(baseRecommendation.chest, rainRecommendation.chest),
+        torso: getRainOnlyItems(baseRecommendation.torso, rainRecommendation.torso),
         legs: getRainOnlyItems(baseRecommendation.legs, rainRecommendation.legs),
         hands: getRainOnlyItems(baseRecommendation.hands, rainRecommendation.hands),
         feet: getRainOnlyItems(baseRecommendation.feet, rainRecommendation.feet),
@@ -2022,7 +2022,7 @@ export function ClothingGuide({}: GuideProps) {
       const allWindItems = [
         ...(modifier.items.head || []),
         ...(modifier.items.neckFace || []),
-        ...(modifier.items.chest || []),
+        ...(modifier.items.torso || []),
         ...(modifier.items.legs || []),
         ...(modifier.items.hands || []),
         ...(modifier.items.feet || []),
@@ -2039,7 +2039,7 @@ export function ClothingGuide({}: GuideProps) {
       const allRainItems = [
         ...(modifier.items.head || []),
         ...(modifier.items.neckFace || []),
-        ...(modifier.items.chest || []),
+        ...(modifier.items.torso || []),
         ...(modifier.items.legs || []),
         ...(modifier.items.hands || []),
         ...(modifier.items.feet || []),
@@ -2058,7 +2058,7 @@ export function ClothingGuide({}: GuideProps) {
       const allTempItems = [
         ...(range.items.head || []),
         ...(range.items.neckFace || []),
-        ...(range.items.chest || []),
+        ...(range.items.torso || []),
         ...(range.items.legs || []),
         ...(range.items.hands || []),
         ...(range.items.feet || []),
@@ -2096,7 +2096,7 @@ export function ClothingGuide({}: GuideProps) {
     const items = {
       head: new Set<string>(),
       neckFace: new Set<string>(),
-      chest: new Set<string>(),
+      torso: new Set<string>(),
       legs: new Set<string>(),
       hands: new Set<string>(),
       feet: new Set<string>(),
@@ -2119,7 +2119,7 @@ export function ClothingGuide({}: GuideProps) {
       const rec = recommendClothing(scenario.weather, scenario.config, currentWardrobe);
       rec.head.forEach(item => addItem(items.head, item));
       rec.neckFace.forEach(item => addItem(items.neckFace, item));
-      rec.chest.forEach(item => addItem(items.chest, item));
+      rec.torso.forEach(item => addItem(items.torso, item));
       rec.legs.forEach(item => addItem(items.legs, item));
       rec.hands.forEach(item => addItem(items.hands, item));
       rec.feet.forEach(item => addItem(items.feet, item));
@@ -2130,7 +2130,7 @@ export function ClothingGuide({}: GuideProps) {
       const rec = recommendClothing(scenario.weather, scenario.config, currentWardrobe);
       rec.head.forEach(item => addItem(items.head, item));
       rec.neckFace.forEach(item => addItem(items.neckFace, item));
-      rec.chest.forEach(item => addItem(items.chest, item));
+      rec.torso.forEach(item => addItem(items.torso, item));
       rec.legs.forEach(item => addItem(items.legs, item));
       rec.hands.forEach(item => addItem(items.hands, item));
       rec.feet.forEach(item => addItem(items.feet, item));
@@ -2141,7 +2141,7 @@ export function ClothingGuide({}: GuideProps) {
       const rec = recommendClothing(scenario.weather, scenario.config, currentWardrobe);
       rec.head.forEach(item => addItem(items.head, item));
       rec.neckFace.forEach(item => addItem(items.neckFace, item));
-      rec.chest.forEach(item => addItem(items.chest, item));
+      rec.torso.forEach(item => addItem(items.torso, item));
       rec.legs.forEach(item => addItem(items.legs, item));
       rec.hands.forEach(item => addItem(items.hands, item));
       rec.feet.forEach(item => addItem(items.feet, item));
@@ -2150,7 +2150,7 @@ export function ClothingGuide({}: GuideProps) {
     const sortedItems = {
       head: sortItems(Array.from(items.head)),
       neckFace: sortItems(Array.from(items.neckFace)),
-      chest: sortItems(Array.from(items.chest)),
+      torso: sortItems(Array.from(items.torso)),
       legs: sortItems(Array.from(items.legs)),
       hands: sortItems(Array.from(items.hands)),
       feet: sortItems(Array.from(items.feet)),
@@ -2262,7 +2262,7 @@ export function ClothingGuide({}: GuideProps) {
   const hasTemperatureContent = useMemo(() => {
     return tempScenarios.some(scenario => {
       const rec = recommendClothing(scenario.weather, scenario.config, currentWardrobe);
-      return rec.head.length > 0 || rec.neckFace.length > 0 || rec.chest.length > 0 ||
+      return rec.head.length > 0 || rec.neckFace.length > 0 || rec.torso.length > 0 ||
              rec.legs.length > 0 || rec.hands.length > 0 || rec.feet.length > 0;
     });
   }, [tempScenarios, currentWardrobe]);
@@ -2294,13 +2294,13 @@ export function ClothingGuide({}: GuideProps) {
       const windOnly = {
         head: getWindOnlyItems(baseRecommendation.head, windRecommendation.head),
         neckFace: getWindOnlyItems(baseRecommendation.neckFace, windRecommendation.neckFace),
-        chest: getWindOnlyItems(baseRecommendation.chest, windRecommendation.chest),
+        torso: getWindOnlyItems(baseRecommendation.torso, windRecommendation.torso),
         legs: getWindOnlyItems(baseRecommendation.legs, windRecommendation.legs),
         hands: getWindOnlyItems(baseRecommendation.hands, windRecommendation.hands),
         feet: getWindOnlyItems(baseRecommendation.feet, windRecommendation.feet),
       };
       
-      return windOnly.head.length > 0 || windOnly.neckFace.length > 0 || windOnly.chest.length > 0 ||
+      return windOnly.head.length > 0 || windOnly.neckFace.length > 0 || windOnly.torso.length > 0 ||
              windOnly.legs.length > 0 || windOnly.hands.length > 0 || windOnly.feet.length > 0;
     });
   }, [windScenarios, currentWardrobe]);
@@ -2333,13 +2333,13 @@ export function ClothingGuide({}: GuideProps) {
       const rainOnly = {
         head: getRainOnlyItems(baseRecommendation.head, rainRecommendation.head),
         neckFace: getRainOnlyItems(baseRecommendation.neckFace, rainRecommendation.neckFace),
-        chest: getRainOnlyItems(baseRecommendation.chest, rainRecommendation.chest),
+        torso: getRainOnlyItems(baseRecommendation.torso, rainRecommendation.torso),
         legs: getRainOnlyItems(baseRecommendation.legs, rainRecommendation.legs),
         hands: getRainOnlyItems(baseRecommendation.hands, rainRecommendation.hands),
         feet: getRainOnlyItems(baseRecommendation.feet, rainRecommendation.feet),
       };
       
-      return rainOnly.head.length > 0 || rainOnly.neckFace.length > 0 || rainOnly.chest.length > 0 ||
+      return rainOnly.head.length > 0 || rainOnly.neckFace.length > 0 || rainOnly.torso.length > 0 ||
              rainOnly.legs.length > 0 || rainOnly.hands.length > 0 || rainOnly.feet.length > 0;
     });
   }, [rainScenarios, currentWardrobe]);
@@ -2570,7 +2570,7 @@ export function ClothingGuide({}: GuideProps) {
 
       {/* All Clothing Items Section */}
       {(allUniqueItems.head.length > 0 || allUniqueItems.neckFace.length > 0 || 
-        allUniqueItems.chest.length > 0 || allUniqueItems.legs.length > 0 || 
+        allUniqueItems.torso.length > 0 || allUniqueItems.legs.length > 0 || 
         allUniqueItems.hands.length > 0 || allUniqueItems.feet.length > 0) && (
         <div className="guide-section">
           <div 
@@ -2624,10 +2624,10 @@ export function ClothingGuide({}: GuideProps) {
               </div>
             )}
 
-            {allUniqueItems.chest.length > 0 && (
+            {allUniqueItems.torso.length > 0 && (
               <div className="quick-kit">
-                <h3>Chest</h3>
-                {groupItemsByType(allUniqueItems.chest, defaultWeatherForType, defaultConfigForType).map((group, groupIdx) => (
+                <h3>Torso</h3>
+                {groupItemsByType(allUniqueItems.torso, defaultWeatherForType, defaultConfigForType).map((group, groupIdx) => (
                   <div key={groupIdx} className="item-group">
                     <div className="item-group-icon-wrapper">
                       <img 
@@ -2637,7 +2637,7 @@ export function ClothingGuide({}: GuideProps) {
                       />
                     </div>
                     <ul className="item-group-list">
-                      {group.items.map((item, idx) => renderItemWithControls(item, idx, 'chest'))}
+                      {group.items.map((item, idx) => renderItemWithControls(item, idx, 'torso'))}
                     </ul>
                   </div>
                 ))}
@@ -2785,7 +2785,7 @@ export function ClothingGuide({}: GuideProps) {
                   <div className="scenario-clothing">
                     {renderCategory(recommendation.head, 'Head')}
                     {renderCategory(recommendation.neckFace, 'Neck/Face')}
-                    {renderCategory(recommendation.chest, 'Chest')}
+                    {renderCategory(recommendation.torso, 'Torso')}
                     {renderCategory(recommendation.legs, 'Legs')}
                     {renderCategory(recommendation.hands, 'Hands')}
                     {renderCategory(recommendation.feet, 'Feet')}
@@ -2844,7 +2844,7 @@ export function ClothingGuide({}: GuideProps) {
             const windOnly = {
               head: getWindOnlyItems(baseRecommendation.head, windRecommendation.head),
               neckFace: getWindOnlyItems(baseRecommendation.neckFace, windRecommendation.neckFace),
-              chest: getWindOnlyItems(baseRecommendation.chest, windRecommendation.chest),
+              torso: getWindOnlyItems(baseRecommendation.torso, windRecommendation.torso),
               legs: getWindOnlyItems(baseRecommendation.legs, windRecommendation.legs),
               hands: getWindOnlyItems(baseRecommendation.hands, windRecommendation.hands),
               feet: getWindOnlyItems(baseRecommendation.feet, windRecommendation.feet),
@@ -2863,7 +2863,7 @@ export function ClothingGuide({}: GuideProps) {
                 <div className="scenario-clothing">
                   {renderCategory(windOnly.head, 'Head')}
                   {renderCategory(windOnly.neckFace, 'Neck/Face')}
-                  {renderCategory(windOnly.chest, 'Chest')}
+                  {renderCategory(windOnly.torso, 'Torso')}
                   {renderCategory(windOnly.legs, 'Legs')}
                   {renderCategory(windOnly.hands, 'Hands')}
                   {renderCategory(windOnly.feet, 'Feet')}
@@ -2939,7 +2939,7 @@ export function ClothingGuide({}: GuideProps) {
               const rainOnly = {
                 head: getRainOnlyItems(baseRecommendation.head, rainRecommendation.head),
                 neckFace: getRainOnlyItems(baseRecommendation.neckFace, rainRecommendation.neckFace),
-                chest: getRainOnlyItems(baseRecommendation.chest, rainRecommendation.chest),
+                torso: getRainOnlyItems(baseRecommendation.torso, rainRecommendation.torso),
                 legs: getRainOnlyItems(baseRecommendation.legs, rainRecommendation.legs),
                 hands: getRainOnlyItems(baseRecommendation.hands, rainRecommendation.hands),
                 feet: getRainOnlyItems(baseRecommendation.feet, rainRecommendation.feet),
@@ -2947,7 +2947,7 @@ export function ClothingGuide({}: GuideProps) {
 
               const hasItems = rainOnly.head.length > 0 ||
                                rainOnly.neckFace.length > 0 ||
-                               rainOnly.chest.length > 0 ||
+                               rainOnly.torso.length > 0 ||
                                rainOnly.legs.length > 0 ||
                                rainOnly.hands.length > 0 ||
                                rainOnly.feet.length > 0;
@@ -2976,7 +2976,7 @@ export function ClothingGuide({}: GuideProps) {
                 <div className="scenario-clothing">
                   {renderCategory(rainOnly.head, 'Head')}
                   {renderCategory(rainOnly.neckFace, 'Neck/Face')}
-                  {renderCategory(rainOnly.chest, 'Chest')}
+                  {renderCategory(rainOnly.torso, 'Torso')}
                   {renderCategory(rainOnly.legs, 'Legs')}
                   {renderCategory(rainOnly.hands, 'Hands')}
                   {renderCategory(rainOnly.feet, 'Feet')}
@@ -3240,7 +3240,7 @@ export function ClothingGuide({}: GuideProps) {
               >
                 <option value="head">Head</option>
                 <option value="neckFace">Neck / Face</option>
-                <option value="chest">Chest</option>
+                <option value="torso">Torso</option>
                 <option value="legs">Legs</option>
                 <option value="hands">Hands</option>
                 <option value="feet">Feet</option>
@@ -3407,7 +3407,7 @@ export function ClothingGuide({}: GuideProps) {
               >
                 <option value="head">Head</option>
                 <option value="neckFace">Neck / Face</option>
-                <option value="chest">Chest</option>
+                <option value="torso">Torso</option>
                 <option value="legs">Legs</option>
                 <option value="hands">Hands</option>
                 <option value="feet">Feet</option>
@@ -3542,7 +3542,7 @@ export function ClothingGuide({}: GuideProps) {
                 onClick={() => {
                   setShowAddFirstClothingModal(false);
                   setNewClothingName('');
-                  setNewClothingBodyPart('chest');
+                  setNewClothingBodyPart('torso');
                   setNewClothingType('temp');
                   setNewClothingMinTemp('');
                   setNewClothingMaxTemp('');

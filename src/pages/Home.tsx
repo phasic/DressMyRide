@@ -40,8 +40,8 @@ export function Home({ onQuickRecommendation, onNavigateToWardrobe, weatherOverr
 
   // Helper to check if a range/modifier has any items
   const hasAnyItems = (items: { [key: string]: (string | { options: string[][] })[] | undefined }): boolean => {
-    const bodyParts: Array<'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet'> = 
-      ['head', 'neckFace', 'chest', 'legs', 'hands', 'feet'];
+    const bodyParts: Array<'head' | 'neckFace' | 'torso' | 'legs' | 'hands' | 'feet'> =
+      ['head', 'neckFace', 'torso', 'legs', 'hands', 'feet'];
     for (const part of bodyParts) {
       const partItems = items[part] || [];
       if (partItems.length > 0) {
@@ -89,7 +89,7 @@ export function Home({ onQuickRecommendation, onNavigateToWardrobe, weatherOverr
     const rec = quickViewData.recommendation;
     return rec.head.length === 0 &&
            rec.neckFace.length === 0 &&
-           rec.chest.length === 0 &&
+           rec.torso.length === 0 &&
            rec.legs.length === 0 &&
            rec.hands.length === 0 &&
            rec.feet.length === 0;
@@ -658,10 +658,10 @@ export function Home({ onQuickRecommendation, onNavigateToWardrobe, weatherOverr
               </div>
             )}
 
-            {quickViewData.recommendation.chest.length > 0 && (
+            {quickViewData.recommendation.torso.length > 0 && (
               <div className="quick-kit">
-                <h3>Chest</h3>
-                {groupItemsByType(quickViewData.recommendation.chest, quickViewData.weather, quickViewData.config).map((group, groupIdx) => (
+                <h3>Torso</h3>
+                {groupItemsByType(quickViewData.recommendation.torso, quickViewData.weather, quickViewData.config).map((group, groupIdx) => (
                   <div key={groupIdx} className="item-group">
                     <div className="item-group-icon-wrapper">
                       <img 

@@ -7,7 +7,7 @@ type ClothingItem = string | { options: string[][] };
 interface ClothingItems {
   head?: ClothingItem[];
   neckFace?: ClothingItem[];
-  chest?: ClothingItem[];
+  torso?: ClothingItem[];
   legs?: ClothingItem[];
   hands?: ClothingItem[];
   feet?: ClothingItem[];
@@ -103,7 +103,7 @@ export function recommendClothing(
 
   const head: ClothingItem[] = [];
   const neckFace: ClothingItem[] = [];
-  const chest: ClothingItem[] = [];
+  const torso: ClothingItem[] = [];
   const legs: ClothingItem[] = [];
   const hands: ClothingItem[] = [];
   const feet: ClothingItem[] = [];
@@ -113,15 +113,16 @@ export function recommendClothing(
   // Use wardrobeOverride if provided (for React state), otherwise read from storage
   const clothingConfig = getClothingConfig(wardrobeOverride);
 
-  // Find matching temperature range
-  const tempRange = clothingConfig.temperatureRanges.find(range =>
+  // Find all matching temperature ranges (multiple ranges can match the same temperature)
+  const matchingTempRanges = clothingConfig.temperatureRanges.filter(range =>
     matchesTemperatureRange(range, temp)
   );
 
-  if (tempRange) {
+  // Combine items from all matching ranges
+  for (const tempRange of matchingTempRanges) {
     addItemsToCategory(head, tempRange.items.head);
     addItemsToCategory(neckFace, tempRange.items.neckFace);
-    addItemsToCategory(chest, tempRange.items.chest);
+    addItemsToCategory(torso, tempRange.items.torso);
     addItemsToCategory(legs, tempRange.items.legs);
     addItemsToCategory(hands, tempRange.items.hands);
     addItemsToCategory(feet, tempRange.items.feet);
@@ -135,7 +136,7 @@ export function recommendClothing(
     if (matchesWindModifier(modifier, wind)) {
       addItemsToCategory(head, modifier.items.head);
       addItemsToCategory(neckFace, modifier.items.neckFace);
-      addItemsToCategory(chest, modifier.items.chest);
+      addItemsToCategory(torso, modifier.items.torso);
       addItemsToCategory(legs, modifier.items.legs);
       addItemsToCategory(hands, modifier.items.hands);
       addItemsToCategory(feet, modifier.items.feet);
@@ -150,7 +151,7 @@ export function recommendClothing(
     if (matchesRainModifier(modifier, maxRainProbability, temp)) {
       addItemsToCategory(head, modifier.items.head);
       addItemsToCategory(neckFace, modifier.items.neckFace);
-      addItemsToCategory(chest, modifier.items.chest);
+      addItemsToCategory(torso, modifier.items.torso);
       addItemsToCategory(legs, modifier.items.legs);
       addItemsToCategory(hands, modifier.items.hands);
       addItemsToCategory(feet, modifier.items.feet);
@@ -168,7 +169,7 @@ export function recommendClothing(
   return {
     head,
     neckFace,
-    chest,
+    torso,
     legs,
     hands,
     feet,

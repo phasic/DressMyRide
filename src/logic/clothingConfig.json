@@ -3,7 +3,7 @@
     {
       "minTemp": 30,
       "items": {
-        "chest": ["Ultra-light jersey"],
+        "torso": ["Ultra-light jersey"],
         "legs": ["Ultra-light bib shorts"]
       },
       "explanation": "Very hot conditions - ultra-light kit"
@@ -12,7 +12,7 @@
       "minTemp": 21,
       "maxTemp": 26,
       "items": {
-        "chest": ["Mesh baselayer", "Short-sleeve jersey"],
+        "torso": ["Mesh baselayer", "Short-sleeve jersey"],
         "legs": ["Bib shorts"]
       },
       "explanation": "Hot conditions - mesh baselayer for ventilation"
@@ -21,7 +21,7 @@
       "minTemp": 18,
       "maxTemp": 21,
       "items": {
-        "chest": ["Short-sleeve jersey"],
+        "torso": ["Short-sleeve jersey"],
         "hands": ["Fingerless cycling gloves"],
         "legs": ["Bib shorts"]
       },
@@ -31,7 +31,7 @@
       "minTemp": 15,
       "maxTemp": 18,
       "items": {
-        "chest": ["Short-sleeve jersey", "Arm warmers"],
+        "torso": ["Short-sleeve jersey", "Arm warmers"],
         "legs": ["Bib shorts"]
       },
       "explanation": "Moderate-warm conditions - arm warmers for flexibility"
@@ -40,7 +40,7 @@
       "minTemp": 10,
       "maxTemp": 15,
       "items": {
-        "chest": ["Lightweight baselayer", "Non-thermal long-sleeve jersey", "Packable warm vest"],
+        "torso": ["Lightweight baselayer", "Non-thermal long-sleeve jersey", "Packable warm vest"],
         "hands": ["Non-thermal full-finger gloves"],
         "legs": [
           {
@@ -58,7 +58,7 @@
       "maxTemp": 10,
       "items": {
         "neckFace": ["Thin neckwarmer (merino)"],
-        "chest": ["Baselayer", "Long-sleeve jersey (non-thermal)"],
+        "torso": ["Baselayer", "Long-sleeve jersey (non-thermal)"],
         "hands": ["Full-finger gloves (light insulation)"],
         "legs": [
           {
@@ -78,7 +78,7 @@
       "items": {
         "head": ["Skull cap (covers ears)"],
         "neckFace": ["Thermal neckwarmer (Buff)"],
-        "chest": ["Baselayer", "Thermal long-sleeve jersey", "Insulated vest or jacket"],
+        "torso": ["Baselayer", "Thermal long-sleeve jersey", "Insulated vest or jacket"],
         "hands": ["Insulated gloves"],
         "legs": ["Thermal bib tights"],
         "feet": [
@@ -97,7 +97,7 @@
     {
       "minWindSpeed": 20,
       "items": {
-        "chest": ["Wind vest"]
+        "torso": ["Wind vest"]
       },
       "explanation": "High wind conditions - wind protection needed"
     }
@@ -107,7 +107,7 @@
       "minRainProbability": 70,
       "maxTemp": 15,
       "items": {
-        "chest": ["Waterproof jacket"]
+        "torso": ["Waterproof jacket"]
       },
       "explanation": "Heavy rain expected - waterproof protection essential"
     },
@@ -115,7 +115,7 @@
       "minRainProbability": 40,
       "maxRainProbability": 70,
       "items": {
-        "chest": ["Rain jacket"]
+        "torso": ["Rain jacket"]
       },
       "explanation": "Rain likely - rain protection recommended"
     }
