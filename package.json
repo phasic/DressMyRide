@@ -1,6 +1,6 @@
 {
   "name": "dressmyride",
-  "version": "1.0.0-278cd25",
+  "version": "1.0.0-f60e965",
   "type": "module",
   "scripts": {
     "dev": "vite",

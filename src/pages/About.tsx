@@ -109,7 +109,7 @@ export function About({ onBack }: AboutProps) {
 
       <div className="about-section">
         <h3>Version</h3>
-        <p>1.0.0-278cd25</p>
+        <p>1.0.0-f60e965</p>
       </div>
 
       <div className="about-sticky-actions">

@@ -217,24 +217,67 @@ export function Home({ onQuickRecommendation, weatherOverride }: HomeProps) {
   const tempUnit = isMetric ? '°C' : '°F';
   const windUnit = isMetric ? 'km/h' : 'mph';
 
-  // Helper function to determine emoji for clothing items
-  const getItemEmoji = (item: string, weather: WeatherSummary, config: RideConfig): string => {
+  // Helper function to determine item type
+  const getItemType = (item: string, weather: WeatherSummary, config: RideConfig): 'temp' | 'wind' | 'rain' => {
     const itemLower = item.toLowerCase();
     const isMetric = config.units === 'metric';
     const wind = isMetric ? weather.maxWindSpeed : weather.maxWindSpeed * 1.60934;
 
     // Wind-related items
     if (itemLower.includes('wind') || (itemLower.includes('vest') && wind > 20)) {
-      return '💨'; // Wind emoji
+      return 'wind';
     }
 
     // Rain-related items
     if (itemLower.includes('rain') || itemLower.includes('waterproof')) {
-      return '🌧️'; // Rain emoji
+      return 'rain';
     }
 
     // Everything else is temperature-related
-    return '🌡️'; // Temperature gauge emoji
+    return 'temp';
+  };
+
+  // Helper function to get icon path for item type
+  const getTypeIcon = (type: 'temp' | 'wind' | 'rain'): string => {
+    switch (type) {
+      case 'wind':
+        return 'windy.png';
+      case 'rain':
+        return 'rainy.png';
+      default:
+        return 'temperature.png';
+    }
+  };
+
+  // Helper function to group items by type
+  const groupItemsByType = (items: string[], weather: WeatherSummary, config: RideConfig) => {
+    const grouped: { type: 'temp' | 'wind' | 'rain'; items: string[] }[] = [];
+    const tempItems: string[] = [];
+    const windItems: string[] = [];
+    const rainItems: string[] = [];
+
+    items.forEach(item => {
+      const type = getItemType(item, weather, config);
+      if (type === 'wind') {
+        windItems.push(item);
+      } else if (type === 'rain') {
+        rainItems.push(item);
+      } else {
+        tempItems.push(item);
+      }
+    });
+
+    if (tempItems.length > 0) {
+      grouped.push({ type: 'temp', items: tempItems });
+    }
+    if (windItems.length > 0) {
+      grouped.push({ type: 'wind', items: windItems });
+    }
+    if (rainItems.length > 0) {
+      grouped.push({ type: 'rain', items: rainItems });
+    }
+
+    return grouped;
   };
 
   return (
@@ -408,84 +451,132 @@ export function Home({ onQuickRecommendation, weatherOverride }: HomeProps) {
             {quickViewData.recommendation.head.length > 0 && (
               <div className="quick-kit">
                 <h3>Head</h3>
-                <ul>
-                  {quickViewData.recommendation.head.map((item, idx) => (
-                    <li key={idx}>
-                      <span className="item-emoji">{getItemEmoji(item, quickViewData.weather, quickViewData.config)}</span>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
+                {groupItemsByType(quickViewData.recommendation.head, quickViewData.weather, quickViewData.config).map((group, groupIdx) => (
+                  <div key={groupIdx} className="item-group">
+                    <div className="item-group-icon-wrapper">
+                      <img 
+                        src={`${import.meta.env.BASE_URL}${getTypeIcon(group.type)}`}
+                        alt=""
+                        className="item-group-icon"
+                      />
+                    </div>
+                    <ul className="item-group-list">
+                      {group.items.map((item, idx) => (
+                        <li key={idx}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
               </div>
             )}
 
             {quickViewData.recommendation.neckFace.length > 0 && (
               <div className="quick-kit">
                 <h3>Neck / Face</h3>
-                <ul>
-                  {quickViewData.recommendation.neckFace.map((item, idx) => (
-                    <li key={idx}>
-                      <span className="item-emoji">{getItemEmoji(item, quickViewData.weather, quickViewData.config)}</span>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
+                {groupItemsByType(quickViewData.recommendation.neckFace, quickViewData.weather, quickViewData.config).map((group, groupIdx) => (
+                  <div key={groupIdx} className="item-group">
+                    <div className="item-group-icon-wrapper">
+                      <img 
+                        src={`${import.meta.env.BASE_URL}${getTypeIcon(group.type)}`}
+                        alt=""
+                        className="item-group-icon"
+                      />
+                    </div>
+                    <ul className="item-group-list">
+                      {group.items.map((item, idx) => (
+                        <li key={idx}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
               </div>
             )}
 
             {quickViewData.recommendation.chest.length > 0 && (
               <div className="quick-kit">
                 <h3>Chest</h3>
-                <ul>
-                  {quickViewData.recommendation.chest.map((item, idx) => (
-                    <li key={idx}>
-                      <span className="item-emoji">{getItemEmoji(item, quickViewData.weather, quickViewData.config)}</span>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
+                {groupItemsByType(quickViewData.recommendation.chest, quickViewData.weather, quickViewData.config).map((group, groupIdx) => (
+                  <div key={groupIdx} className="item-group">
+                    <div className="item-group-icon-wrapper">
+                      <img 
+                        src={`${import.meta.env.BASE_URL}${getTypeIcon(group.type)}`}
+                        alt=""
+                        className="item-group-icon"
+                      />
+                    </div>
+                    <ul className="item-group-list">
+                      {group.items.map((item, idx) => (
+                        <li key={idx}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
               </div>
             )}
 
             {quickViewData.recommendation.legs.length > 0 && (
               <div className="quick-kit">
                 <h3>Legs</h3>
-                <ul>
-                  {quickViewData.recommendation.legs.map((item, idx) => (
-                    <li key={idx}>
-                      <span className="item-emoji">{getItemEmoji(item, quickViewData.weather, quickViewData.config)}</span>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
+                {groupItemsByType(quickViewData.recommendation.legs, quickViewData.weather, quickViewData.config).map((group, groupIdx) => (
+                  <div key={groupIdx} className="item-group">
+                    <div className="item-group-icon-wrapper">
+                      <img 
+                        src={`${import.meta.env.BASE_URL}${getTypeIcon(group.type)}`}
+                        alt=""
+                        className="item-group-icon"
+                      />
+                    </div>
+                    <ul className="item-group-list">
+                      {group.items.map((item, idx) => (
+                        <li key={idx}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
               </div>
             )}
 
             {quickViewData.recommendation.hands.length > 0 && (
               <div className="quick-kit">
                 <h3>Hands</h3>
-                <ul>
-                  {quickViewData.recommendation.hands.map((item, idx) => (
-                    <li key={idx}>
-                      <span className="item-emoji">{getItemEmoji(item, quickViewData.weather, quickViewData.config)}</span>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
+                {groupItemsByType(quickViewData.recommendation.hands, quickViewData.weather, quickViewData.config).map((group, groupIdx) => (
+                  <div key={groupIdx} className="item-group">
+                    <div className="item-group-icon-wrapper">
+                      <img 
+                        src={`${import.meta.env.BASE_URL}${getTypeIcon(group.type)}`}
+                        alt=""
+                        className="item-group-icon"
+                      />
+                    </div>
+                    <ul className="item-group-list">
+                      {group.items.map((item, idx) => (
+                        <li key={idx}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
               </div>
             )}
 
             {quickViewData.recommendation.feet.length > 0 && (
               <div className="quick-kit">
                 <h3>Feet</h3>
-                <ul>
-                  {quickViewData.recommendation.feet.map((item, idx) => (
-                    <li key={idx}>
-                      <span className="item-emoji">{getItemEmoji(item, quickViewData.weather, quickViewData.config)}</span>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
+                {groupItemsByType(quickViewData.recommendation.feet, quickViewData.weather, quickViewData.config).map((group, groupIdx) => (
+                  <div key={groupIdx} className="item-group">
+                    <div className="item-group-icon-wrapper">
+                      <img 
+                        src={`${import.meta.env.BASE_URL}${getTypeIcon(group.type)}`}
+                        alt=""
+                        className="item-group-icon"
+                      />
+                    </div>
+                    <ul className="item-group-list">
+                      {group.items.map((item, idx) => (
+                        <li key={idx}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
               </div>
             )}
           </div>
