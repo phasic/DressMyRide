@@ -2303,6 +2303,8 @@ img.ios-tab-icon {
   cursor: pointer;
   transition: background-color 0.15s;
   -webkit-tap-highlight-color: transparent;
+  display: flex;
+  align-items: center;
 }
 
 .menu-item:hover:not(:disabled) {

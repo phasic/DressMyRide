@@ -18,11 +18,15 @@ export function ClothingGuide({}: GuideProps) {
   const [showAddClothingModal, setShowAddClothingModal] = useState(false);
   const [showAddFirstClothingModal, setShowAddFirstClothingModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showImportConfirm, setShowImportConfirm] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
   const [showDeleteItemConfirm, setShowDeleteItemConfirm] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{ name: string; bodyPart: 'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet' } | null>(null);
   const [addClothingError, setAddClothingError] = useState<string>('');
   const [editItemError, setEditItemError] = useState<string>('');
   const [newClothingName, setNewClothingName] = useState('');
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [renameWardrobeName, setRenameWardrobeName] = useState('');
   const [newClothingBodyPart, setNewClothingBodyPart] = useState<'head' | 'neckFace' | 'chest' | 'legs' | 'hands' | 'feet'>('chest');
   const [newClothingType, setNewClothingType] = useState<'temp' | 'wind' | 'rain'>('temp');
   const [newClothingMinTemp, setNewClothingMinTemp] = useState<string>('');
@@ -537,6 +541,108 @@ export function ClothingGuide({}: GuideProps) {
     storage.setSelectedWardrobeId(null);
     setShowDeleteConfirm(false);
     setShowMenu(false);
+  };
+
+  // Export wardrobe to JSON file
+  const handleExportWardrobe = () => {
+    if (!selectedWardrobeId || isDefaultWardrobe) return;
+    
+    const wardrobeToExport = currentWardrobe;
+    const exportData = JSON.stringify(wardrobeToExport, null, 2);
+    const blob = new Blob([exportData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${wardrobeToExport.name.replace(/[^a-z0-9]/gi, '_')}_wardrobe.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // Import wardrobe from JSON file
+  const handleImportWardrobe = () => {
+    if (!importFile) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const importedData = JSON.parse(e.target?.result as string);
+        
+        // Validate the imported data structure
+        if (!importedData.name || !importedData.temperatureRanges || !importedData.windModifiers || !importedData.rainModifiers) {
+          alert('Invalid wardrobe file format. Please ensure the file contains a valid wardrobe configuration.');
+          setShowImportConfirm(false);
+          setImportFile(null);
+          return;
+        }
+
+        // Create new wardrobe from imported data
+        const importedWardrobe: WardrobeConfig = {
+          ...importedData,
+          id: `wardrobe-${Date.now()}`,
+          isDefault: false,
+        };
+
+        // Add to wardrobes list
+        const updatedWardrobes = [...wardrobes, importedWardrobe];
+        setWardrobes(updatedWardrobes);
+        storage.setWardrobes(updatedWardrobes);
+        
+        // Select the imported wardrobe
+        setSelectedWardrobeId(importedWardrobe.id);
+        storage.setSelectedWardrobeId(importedWardrobe.id);
+        
+        setShowImportConfirm(false);
+        setImportFile(null);
+      } catch (error) {
+        alert('Error reading wardrobe file. Please ensure the file is valid JSON.');
+        setShowImportConfirm(false);
+        setImportFile(null);
+      }
+    };
+    reader.readAsText(importFile);
+  };
+
+  // Rename wardrobe
+  const handleRenameWardrobe = () => {
+    if (!renameWardrobeName.trim()) {
+      return;
+    }
+
+    if (isDefaultWardrobe) {
+      // For default wardrobe, we can't modify it directly, so create a copy with new name
+      const renamedWardrobe: WardrobeConfig = {
+        ...currentWardrobe,
+        id: `wardrobe-${Date.now()}`,
+        name: renameWardrobeName.trim(),
+        isDefault: false,
+      };
+      const updatedWardrobes = [...wardrobes, renamedWardrobe];
+      setWardrobes(updatedWardrobes);
+      storage.setWardrobes(updatedWardrobes);
+      setSelectedWardrobeId(renamedWardrobe.id);
+      storage.setSelectedWardrobeId(renamedWardrobe.id);
+    } else {
+      // For custom wardrobes, update the name
+      const updatedWardrobes = wardrobes.map(wardrobe => {
+        if (wardrobe.id === currentWardrobe.id) {
+          return {
+            ...wardrobe,
+            name: renameWardrobeName.trim(),
+          };
+        }
+        return wardrobe;
+      });
+      setWardrobes(updatedWardrobes);
+      // Only save to storage if not in edit mode
+      if (!isEditMode) {
+        storage.setWardrobes(updatedWardrobes);
+      }
+    }
+    
+    setShowRenameModal(false);
+    setRenameWardrobeName('');
   };
 
   const toggleSection = (section: 'uniqueItems' | 'temperature' | 'wind' | 'rain') => {
@@ -2188,7 +2294,65 @@ export function ClothingGuide({}: GuideProps) {
                     setShowMenu(false);
                   }}
                 >
-                  Create new wardrobe
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: '12px', flexShrink: 0 }}>
+                    <path d="M9 3.75V14.25M3.75 9H14.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Create new
+                </button>
+                <button
+                  type="button"
+                  className="menu-item"
+                  onClick={() => {
+                    setRenameWardrobeName(currentWardrobe.name);
+                    setShowRenameModal(true);
+                    setShowMenu(false);
+                  }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: '12px', flexShrink: 0 }}>
+                    <path d="M11.05 3.00002L4.20835 10.2417C3.95002 10.5167 3.70002 11.0584 3.65002 11.4334L3.34169 14.1334C3.23335 15.1084 3.93335 15.775 4.90002 15.6084L7.58335 15.15C7.95835 15.0834 8.48335 14.8084 8.74169 14.525L15.5834 7.28335C16.7667 6.03335 17.3 4.60835 15.4584 2.86668C13.625 1.14168 12.2334 1.75002 11.05 3.00002Z" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M9.90833 4.20831C10.2667 6.50831 12.1333 8.26665 14.45 8.49998" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M2.5 18.3333H17.5" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Rename
+                </button>
+                {!isDefaultWardrobe && (
+                  <button
+                    type="button"
+                    className="menu-item"
+                    onClick={() => {
+                      handleExportWardrobe();
+                      setShowMenu(false);
+                    }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: '12px', flexShrink: 0 }}>
+                      <path d="M9 12.75V3.75M9 12.75L6.75 10.5M9 12.75L11.25 10.5M3.75 15.75H14.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Export
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="menu-item"
+                  onClick={() => {
+                    // Trigger file input click
+                    const fileInput = document.createElement('input');
+                    fileInput.type = 'file';
+                    fileInput.accept = '.json';
+                    fileInput.onchange = (e) => {
+                      const file = (e.target as HTMLInputElement).files?.[0];
+                      if (file) {
+                        setImportFile(file);
+                        setShowImportConfirm(true);
+                        setShowMenu(false);
+                      }
+                    };
+                    fileInput.click();
+                  }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: '12px', flexShrink: 0 }}>
+                    <path d="M9 5.25V14.25M9 5.25L6.75 7.5M9 5.25L11.25 7.5M3.75 2.25H14.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Import
                 </button>
                 {!isDefaultWardrobe && (
                   <button
@@ -2199,7 +2363,11 @@ export function ClothingGuide({}: GuideProps) {
                       setShowMenu(false);
                     }}
                   >
-                    Delete wardrobe
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: '12px', flexShrink: 0 }}>
+                      <path d="M3.75 5.25H14.25M6.75 5.25V3.75C6.75 3.33579 7.08579 3 7.5 3H10.5C10.9142 3 11.25 3.33579 11.25 3.75V5.25M5.25 5.25V14.25C5.25 14.6642 5.58579 15 6 15H12C12.4142 15 12.75 14.6642 12.75 14.25V5.25H5.25Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M7.5 8.25V12.75M10.5 8.25V12.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Delete
                   </button>
                 )}
               </div>
@@ -2746,6 +2914,92 @@ export function ClothingGuide({}: GuideProps) {
                 style={{ backgroundColor: '#FF3B30' }}
               >
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import Wardrobe Confirmation Modal */}
+      {showImportConfirm && importFile && (
+        <div className="modal-overlay" onClick={() => {
+          setShowImportConfirm(false);
+          setImportFile(null);
+        }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Import Wardrobe</h3>
+            <p>Import wardrobe from "{importFile.name}"? This will create a new wardrobe with the imported configuration.</p>
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  setShowImportConfirm(false);
+                  setImportFile(null);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleImportWardrobe}
+                style={{ backgroundColor: '#34C759' }}
+              >
+                Import
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rename Wardrobe Modal */}
+      {showRenameModal && (
+        <div className="modal-overlay" onClick={() => {
+          setShowRenameModal(false);
+          setRenameWardrobeName('');
+        }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Rename Wardrobe</h3>
+            <div className="form-group">
+              <label htmlFor="renameWardrobeName">Wardrobe Name</label>
+              <input
+                id="renameWardrobeName"
+                type="text"
+                value={renameWardrobeName}
+                onChange={(e) => setRenameWardrobeName(e.target.value)}
+                placeholder="Enter wardrobe name"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleRenameWardrobe();
+                  }
+                }}
+              />
+            </div>
+            {isDefaultWardrobe && (
+              <p style={{ fontSize: '14px', color: 'var(--secondary-color)', marginTop: '8px' }}>
+                Note: Renaming the default wardrobe will create a copy with the new name.
+              </p>
+            )}
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  setShowRenameModal(false);
+                  setRenameWardrobeName('');
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleRenameWardrobe}
+                disabled={!renameWardrobeName.trim()}
+              >
+                Rename
               </button>
             </div>
           </div>
