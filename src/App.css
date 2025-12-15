@@ -2648,6 +2648,84 @@ img.ios-tab-icon {
   margin-bottom: 16px;
 }
 
+/* Location Error Card */
+.location-error-card {
+  text-align: center;
+  padding: 48px 24px;
+  margin: 24px 0;
+  background-color: rgba(142, 142, 147, 0.08);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 16px;
+  border: 0.5px solid rgba(142, 142, 147, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+:root.dark .location-error-card {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.location-error-icon {
+  font-size: 64px;
+  line-height: 1;
+  margin-bottom: 20px;
+  opacity: 0.8;
+}
+
+.location-error-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0 0 16px 0;
+  letter-spacing: -0.41px;
+}
+
+.location-error-message {
+  font-size: 16px;
+  color: var(--text-color);
+  margin: 0 0 12px 0;
+  line-height: 1.5;
+  max-width: 400px;
+}
+
+.location-error-instruction {
+  font-size: 15px;
+  color: var(--secondary-color);
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+  max-width: 400px;
+}
+
+.location-error-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.location-error-actions .btn {
+  width: 100%;
+}
+
+@media (min-width: 480px) {
+  .location-error-actions {
+    flex-direction: row;
+    justify-content: center;
+  }
+  
+  .location-error-actions .btn {
+    width: auto;
+    min-width: 140px;
+  }
+}
+
 .empty-wardrobe-quick-view-message .empty-wardrobe-title {
   font-size: 22px;
   font-weight: 600;

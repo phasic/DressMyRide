@@ -357,6 +357,7 @@ function App() {
                   setConfig(cfg);
                 }}
                 onNavigateToWardrobe={() => handleNavigate('guide')}
+                onNavigateToCustom={() => handleNavigate('setup')}
                 weatherOverride={weatherOverride}
               />
             )}
@@ -414,7 +415,14 @@ function App() {
             <BottomTabBar
               currentPage={page}
               onHome={() => handleNavigate('home')}
-              onCustom={() => handleNavigate('setup')}
+              onCustom={() => {
+                // If there's a current recommendation, navigate to it instead of resetting
+                if (recommendation && weather && config && location) {
+                  handleNavigate('recommendation');
+                } else {
+                  handleNavigate('setup');
+                }
+              }}
               onGuide={() => handleNavigate('guide')}
               customLoading={loading && page === 'setup'}
             />

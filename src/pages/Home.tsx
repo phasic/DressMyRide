@@ -18,10 +18,11 @@ interface HomeProps {
     config: RideConfig
   ) => void;
   onNavigateToWardrobe?: () => void;
+  onNavigateToCustom?: () => void;
   weatherOverride?: Partial<WeatherSummary> | null;
 }
 
-export function Home({ onQuickRecommendation, onNavigateToWardrobe, weatherOverride }: HomeProps) {
+export function Home({ onQuickRecommendation, onNavigateToWardrobe, onNavigateToCustom, weatherOverride }: HomeProps) {
   const [error, setError] = useState<string | null>(null);
   const [quickViewData, setQuickViewData] = useState<{
     weather: WeatherSummary;
@@ -156,7 +157,7 @@ export function Home({ onQuickRecommendation, onNavigateToWardrobe, weatherOverr
     }
 
     if (!navigator.geolocation) {
-      setError('Geolocation is not supported by your browser.');
+      setError('geolocation-not-supported');
       setQuickViewLoading(false);
       return;
     }
@@ -197,13 +198,28 @@ export function Home({ onQuickRecommendation, onNavigateToWardrobe, weatherOverr
           onQuickRecommendation(location, weather, recommendation, config);
           setError(null); // Clear any previous errors
         } catch (err) {
-          setError(err instanceof Error ? err.message : 'Failed to load quick view');
+          setError('load-failed');
         } finally {
           setQuickViewLoading(false);
         }
       },
-      () => {
-        setError('Location permission denied. Quick view unavailable.');
+      (error) => {
+        // Handle different types of geolocation errors
+        let errorType: string;
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorType = 'permission-denied';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorType = 'position-unavailable';
+            break;
+          case error.TIMEOUT:
+            errorType = 'timeout';
+            break;
+          default:
+            errorType = 'location-error';
+        }
+        setError(errorType);
         setQuickViewLoading(false);
       }
     );
@@ -385,11 +401,79 @@ export function Home({ onQuickRecommendation, onNavigateToWardrobe, weatherOverr
       )}
 
       {error && !quickViewData && (
-        <div className="error">
-          {error}
-          <p style={{ marginTop: '0.5rem', fontSize: '0.9rem', opacity: 0.8 }}>
-            You can still use the app by entering a city manually or using custom ride options.
-          </p>
+        <div className="location-error-card">
+          <div className="location-error-icon">📍</div>
+          <h3 className="location-error-title">Location Access Needed</h3>
+          {error === 'permission-denied' && (
+            <>
+              <p className="location-error-message">
+                To provide quick weather recommendations, VeloKit needs access to your location.
+              </p>
+              <p className="location-error-instruction">
+                Please enable location services in your browser settings, or use the Custom tab to enter a location manually.
+              </p>
+            </>
+          )}
+          {error === 'geolocation-not-supported' && (
+            <>
+              <p className="location-error-message">
+                Your browser doesn't support location services.
+              </p>
+              <p className="location-error-instruction">
+                Use the Custom tab to enter a location manually for weather recommendations.
+              </p>
+            </>
+          )}
+          {error === 'position-unavailable' && (
+            <>
+              <p className="location-error-message">
+                Unable to determine your location. This might be due to GPS issues or network problems.
+              </p>
+              <p className="location-error-instruction">
+                Try again later, or use the Custom tab to enter a location manually.
+              </p>
+            </>
+          )}
+          {error === 'timeout' && (
+            <>
+              <p className="location-error-message">
+                Location request timed out. This might be due to slow GPS or network issues.
+              </p>
+              <p className="location-error-instruction">
+                Try again, or use the Custom tab to enter a location manually.
+              </p>
+            </>
+          )}
+          {(error === 'load-failed' || error === 'location-error') && (
+            <>
+              <p className="location-error-message">
+                Unable to load location-based recommendations.
+              </p>
+              <p className="location-error-instruction">
+                Use the Custom tab to enter a location manually for weather recommendations.
+              </p>
+            </>
+          )}
+          <div className="location-error-actions">
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                setError(null);
+                loadQuickView();
+              }}
+              style={{ marginRight: '12px' }}
+            >
+              Try Again
+            </button>
+            {onNavigateToCustom && (
+              <button
+                className="btn btn-secondary"
+                onClick={onNavigateToCustom}
+              >
+                Use Custom Tab
+              </button>
+            )}
+          </div>
         </div>
       )}
 
