@@ -1195,14 +1195,22 @@ export function ClothingGuide({}: GuideProps) {
         let display = '';
         let sortValue = 0;
         
+        // Convert temperatures to imperial if needed
+        const convertTemp = (temp: number) => units === 'imperial' ? (temp * 9/5) + 32 : temp;
+        const tempUnit = units === 'metric' ? '°C' : '°F';
+        
         if (range.minTemp !== undefined && range.minTemp !== null && range.maxTemp !== undefined && range.maxTemp !== null) {
-          display = `${range.minTemp}° - ${range.maxTemp}°`;
-          sortValue = range.minTemp; // Sort by minimum temperature
+          const minTempDisplay = Math.round(convertTemp(range.minTemp));
+          const maxTempDisplay = Math.round(convertTemp(range.maxTemp));
+          display = `${minTempDisplay}${tempUnit} - ${maxTempDisplay}${tempUnit}`;
+          sortValue = range.minTemp; // Sort by minimum temperature (always use metric for sorting)
         } else if (range.minTemp !== undefined && range.minTemp !== null) {
-          display = `> ${range.minTemp}°`;
+          const minTempDisplay = Math.round(convertTemp(range.minTemp));
+          display = `> ${minTempDisplay}${tempUnit}`;
           sortValue = range.minTemp;
         } else if (range.maxTemp !== undefined && range.maxTemp !== null) {
-          display = `< ${range.maxTemp}°`;
+          const maxTempDisplay = Math.round(convertTemp(range.maxTemp));
+          display = `< ${maxTempDisplay}${tempUnit}`;
           sortValue = range.maxTemp - 1000; // Put max-only ranges at the beginning (very low sort value)
         }
         
@@ -1212,7 +1220,12 @@ export function ClothingGuide({}: GuideProps) {
       } else if (location.type === 'wind' && location.modifierIndex !== undefined) {
         const modifier = currentWardrobe.windModifiers[location.modifierIndex];
         if (modifier.minWindSpeed !== undefined) {
-          windSpeeds.push(`≥ ${modifier.minWindSpeed} km/h`);
+          // Convert wind speed to imperial if needed
+          const windSpeedDisplay = units === 'imperial' 
+            ? Math.round(modifier.minWindSpeed * 0.621371)
+            : Math.round(modifier.minWindSpeed);
+          const windUnit = units === 'metric' ? 'km/h' : 'mph';
+          windSpeeds.push(`≥ ${windSpeedDisplay} ${windUnit}`);
         }
       } else if (location.type === 'rain' && location.modifierIndex !== undefined) {
         const modifier = currentWardrobe.rainModifiers[location.modifierIndex];
@@ -2171,8 +2184,8 @@ export function ClothingGuide({}: GuideProps) {
     }
     
     const itemLower = typeof item === 'string' ? item.toLowerCase() : '';
-    const isMetric = config.units === 'metric';
-    const wind = isMetric ? weather.maxWindSpeed : weather.maxWindSpeed * 1.60934;
+    // Weather data is stored in metric, so use directly
+    const wind = weather.maxWindSpeed;
 
     // Wind-related items
     if (itemLower.includes('wind') || (itemLower.includes('vest') && wind > 20)) {

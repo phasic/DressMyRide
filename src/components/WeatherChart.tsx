@@ -69,11 +69,15 @@ export function WeatherChart({ weather, config }: WeatherChartProps) {
       const timeDiff = hour2.dt - hour1.dt;
       const factor = timeDiff > 0 ? (time - hour1.dt) / timeDiff : 0;
       
-      // Interpolate values
-      const feelsLike = hour1.feels_like + (hour2.feels_like - hour1.feels_like) * factor;
-      const windSpeed = hour1.wind_speed + (hour2.wind_speed - hour1.wind_speed) * factor;
+      // Interpolate values (data is stored in metric)
+      const feelsLikeMetric = hour1.feels_like + (hour2.feels_like - hour1.feels_like) * factor;
+      const windSpeedMetric = hour1.wind_speed + (hour2.wind_speed - hour1.wind_speed) * factor;
       const rainChance = hour1.pop + (hour2.pop - hour1.pop) * factor;
       const rainIntensity = (hour1.rain?.['1h'] || 0) + ((hour2.rain?.['1h'] || 0) - (hour1.rain?.['1h'] || 0)) * factor;
+
+      // Convert for display if imperial
+      const feelsLike = units === 'imperial' ? (feelsLikeMetric * 9/5) + 32 : feelsLikeMetric;
+      const windSpeed = units === 'imperial' ? windSpeedMetric * 0.621371 : windSpeedMetric;
 
       // Format time label: show "Now" for first point, then minutes or hours+minutes
       // Only show label at specified intervals to avoid crowding

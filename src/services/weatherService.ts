@@ -59,23 +59,29 @@ export async function fetchWeatherForecast(
     throw new Error('No weather data available for ride window');
   }
 
-  // Compute summary
+  // Normalize all values to metric for internal storage
+  // Convert from imperial if API returned imperial
+  const isImperial = units === 'imperial';
+  const convertTemp = (f: number) => isImperial ? (f - 32) * 5/9 : f;
+  const convertWind = (mph: number) => isImperial ? mph * 1.60934 : mph;
+
+  // Compute summary (normalized to metric)
   const summary: WeatherSummary = {
-    minTemp: Math.min(...rideHours.map((h) => h.temp)),
-    maxTemp: Math.max(...rideHours.map((h) => h.temp)),
-    minFeelsLike: Math.min(...rideHours.map((h) => h.feels_like)),
-    maxFeelsLike: Math.max(...rideHours.map((h) => h.feels_like)),
-    maxWindSpeed: Math.max(...rideHours.map((h) => h.wind_speed)),
+    minTemp: Math.min(...rideHours.map((h) => convertTemp(h.temp))),
+    maxTemp: Math.max(...rideHours.map((h) => convertTemp(h.temp))),
+    minFeelsLike: Math.min(...rideHours.map((h) => convertTemp(h.feels_like))),
+    maxFeelsLike: Math.max(...rideHours.map((h) => convertTemp(h.feels_like))),
+    maxWindSpeed: Math.max(...rideHours.map((h) => convertWind(h.wind_speed))),
     maxRainProbability: Math.max(...rideHours.map((h) => h.pop)),
     maxPrecipitationIntensity: Math.max(
       ...rideHours.map((h) => h.rain?.['1h'] || 0)
     ),
-    // Include hourly data for charts
+    // Include hourly data for charts (normalized to metric)
     hourly: rideHours.map((h) => ({
       dt: h.dt,
-      temp: h.temp,
-      feels_like: h.feels_like,
-      wind_speed: h.wind_speed,
+      temp: convertTemp(h.temp),
+      feels_like: convertTemp(h.feels_like),
+      wind_speed: convertWind(h.wind_speed),
       pop: h.pop,
       rain: h.rain,
     })),

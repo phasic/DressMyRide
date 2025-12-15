@@ -16,6 +16,8 @@ export function Settings({ onBack, onAbout, onShowInstallPrompt, onWeatherOverri
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>(() => storage.getTheme());
   const [dateFormat, setDateFormat] = useState<'custom' | 'system'>(() => storage.getDateFormat());
   const [defaultDuration, setDefaultDuration] = useState(() => storage.getDefaultDuration());
+  const [defaultDurationInput, setDefaultDurationInput] = useState<string>(() => storage.getDefaultDuration().toString());
+  const [defaultDurationError, setDefaultDurationError] = useState<string>('');
   const [demoMode, setDemoMode] = useState(() => storage.getDemoMode());
   const [disableInstallPrompt, setDisableInstallPrompt] = useState(() => storage.getDisableInstallPrompt());
   const [isInstalled, setIsInstalled] = useState(false);
@@ -42,8 +44,20 @@ export function Settings({ onBack, onAbout, onShowInstallPrompt, onWeatherOverri
   }, [dateFormat]);
 
   useEffect(() => {
-    storage.setDefaultDuration(defaultDuration);
-  }, [defaultDuration]);
+    // Validate default duration
+    const numValue = parseFloat(defaultDurationInput);
+    if (defaultDurationInput === '' || isNaN(numValue)) {
+      setDefaultDurationError('Duration must be greater than 0');
+    } else if (numValue === 0) {
+      setDefaultDurationError('Duration must be greater than 0');
+    } else if (numValue > 24) {
+      setDefaultDurationError('Duration cannot exceed 24 hours');
+    } else {
+      setDefaultDurationError('');
+      setDefaultDuration(numValue);
+      storage.setDefaultDuration(numValue);
+    }
+  }, [defaultDurationInput]);
 
   useEffect(() => {
     storage.setDemoMode(demoMode);
@@ -59,6 +73,16 @@ export function Settings({ onBack, onAbout, onShowInstallPrompt, onWeatherOverri
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate default duration before saving
+    const numValue = parseFloat(defaultDurationInput);
+    if (defaultDurationInput === '' || isNaN(numValue) || numValue === 0 || numValue > 24) {
+      setDefaultDurationError(numValue === 0 || defaultDurationInput === '' || isNaN(numValue)
+        ? 'Duration must be greater than 0' 
+        : 'Duration cannot exceed 24 hours');
+      return;
+    }
+    
     storage.setApiKey(apiKey);
     storage.setUnits(units);
     storage.setTheme(theme);
@@ -185,9 +209,22 @@ export function Settings({ onBack, onAbout, onShowInstallPrompt, onWeatherOverri
                 value={units}
                 onChange={(e) => setUnits(e.target.value as 'metric' | 'imperial')}
               >
-                <option value="metric">°C / km/h</option>
-                <option value="imperial">°F / mph</option>
+                <option value="metric">Metric (°C / km/h)</option>
+                <option value="imperial">Imperial (°F / mph)</option>
               </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="dateFormat">Date/Time Format</label>
+              <select
+                id="dateFormat"
+                value={dateFormat}
+                onChange={(e) => setDateFormat(e.target.value as 'custom' | 'system')}
+              >
+                <option value="system">System (e.g., Dec 15, 2:30 PM)</option>
+                <option value="custom">Custom (e.g., Saturday 13 Dec, 20:13)</option>
+              </select>
+              <small>Choose your preferred date and time format</small>
             </div>
 
             <div className="form-group">
@@ -205,30 +242,26 @@ export function Settings({ onBack, onAbout, onShowInstallPrompt, onWeatherOverri
             </div>
 
             <div className="form-group">
-              <label htmlFor="dateFormat">Date/Time Format</label>
-              <select
-                id="dateFormat"
-                value={dateFormat}
-                onChange={(e) => setDateFormat(e.target.value as 'custom' | 'system')}
-              >
-                <option value="system">System (e.g., Dec 15, 2:30 PM)</option>
-                <option value="custom">Custom (e.g., Saturday 13 Dec, 20:13)</option>
-              </select>
-              <small>Choose your preferred date and time format</small>
-            </div>
-
-            <div className="form-group">
               <label htmlFor="defaultDuration">Default Riding Duration (hours)</label>
               <input
                 id="defaultDuration"
                 type="number"
-                min="0.5"
+                min="0"
                 max="24"
                 step="0.5"
-                value={defaultDuration}
-                onChange={(e) => setDefaultDuration(parseFloat(e.target.value) || 2)}
+                value={defaultDurationInput}
+                onChange={(e) => {
+                  setDefaultDurationInput(e.target.value);
+                }}
               />
-              <small>Default duration for quick view rides (0.5 to 24 hours)</small>
+              {defaultDurationError && (
+                <small style={{ color: 'var(--error-color)', display: 'block', marginTop: '4px' }}>
+                  {defaultDurationError}
+                </small>
+              )}
+              {!defaultDurationError && (
+                <small>Default duration for quick view rides (0.5 to 24 hours)</small>
+              )}
             </div>
 
             <div className="form-group">

@@ -54,8 +54,8 @@ export function Recommendation({
     }
     
     const itemLower = typeof item === 'string' ? item.toLowerCase() : '';
-    const isMetric = config.units === 'metric';
-    const wind = isMetric ? weather.maxWindSpeed : weather.maxWindSpeed * 1.60934;
+    // Weather data is stored in metric, so use directly
+    const wind = weather.maxWindSpeed;
 
     // Wind-related items
     if (itemLower.includes('wind') || (itemLower.includes('vest') && wind > 20)) {
@@ -128,15 +128,19 @@ export function Recommendation({
                 />
               </div>
               <div className="badge-value" style={{ fontSize: getTemperatureFontSize(weather.minFeelsLike, weather.maxFeelsLike) }}>
-                {Math.round(weather.minFeelsLike) === Math.round(weather.maxFeelsLike) ? (
-                  <>
-                    {Math.round(weather.minFeelsLike)}<span className="badge-unit">{tempUnit}</span>
-                  </>
-                ) : (
-                  <>
-                    {Math.round(weather.minFeelsLike)}<span className="badge-unit">{tempUnit}</span> <span className="badge-dash">-</span> {Math.round(weather.maxFeelsLike)}<span className="badge-unit">{tempUnit}</span>
-                  </>
-                )}
+                {(() => {
+                  const minFeelsLike = isMetric ? weather.minFeelsLike : (weather.minFeelsLike * 9/5) + 32;
+                  const maxFeelsLike = isMetric ? weather.maxFeelsLike : (weather.maxFeelsLike * 9/5) + 32;
+                  return Math.round(minFeelsLike) === Math.round(maxFeelsLike) ? (
+                    <>
+                      {Math.round(minFeelsLike)}<span className="badge-unit">{tempUnit}</span>
+                    </>
+                  ) : (
+                    <>
+                      {Math.round(minFeelsLike)}<span className="badge-unit">{tempUnit}</span> <span className="badge-dash">-</span> {Math.round(maxFeelsLike)}<span className="badge-unit">{tempUnit}</span>
+                    </>
+                  );
+                })()}
               </div>
             </div>
             <div 
@@ -157,15 +161,19 @@ export function Recommendation({
                 />
               </div>
               <div className="badge-value" style={{ fontSize: getTemperatureFontSize(weather.minTemp, weather.maxTemp) }}>
-                {Math.round(weather.minTemp) === Math.round(weather.maxTemp) ? (
-                  <>
-                    {Math.round(weather.minTemp)}<span className="badge-unit">{tempUnit}</span>
-                  </>
-                ) : (
-                  <>
-                    {Math.round(weather.minTemp)}<span className="badge-unit">{tempUnit}</span> <span className="badge-dash">-</span> {Math.round(weather.maxTemp)}<span className="badge-unit">{tempUnit}</span>
-                  </>
-                )}
+                {(() => {
+                  const minTemp = isMetric ? weather.minTemp : (weather.minTemp * 9/5) + 32;
+                  const maxTemp = isMetric ? weather.maxTemp : (weather.maxTemp * 9/5) + 32;
+                  return Math.round(minTemp) === Math.round(maxTemp) ? (
+                    <>
+                      {Math.round(minTemp)}<span className="badge-unit">{tempUnit}</span>
+                    </>
+                  ) : (
+                    <>
+                      {Math.round(minTemp)}<span className="badge-unit">{tempUnit}</span> <span className="badge-dash">-</span> {Math.round(maxTemp)}<span className="badge-unit">{tempUnit}</span>
+                    </>
+                  );
+                })()}
               </div>
             </div>
             <div 
@@ -187,7 +195,7 @@ export function Recommendation({
               </div>
               <div className="badge-value">
                 <span style={{ fontSize: '11px', opacity: 0.7, marginRight: '2px' }}>max</span>
-                {Math.round(weather.maxWindSpeed)}<span className="badge-unit"> {windUnit}</span>
+                {Math.round(isMetric ? weather.maxWindSpeed : weather.maxWindSpeed * 0.621371)}<span className="badge-unit"> {windUnit}</span>
               </div>
             </div>
             <div 
