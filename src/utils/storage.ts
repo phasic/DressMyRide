@@ -16,6 +16,7 @@ const STORAGE_KEYS = {
   DISABLE_INSTALL_PROMPT: 'velokit_disable_install_prompt',
   WARDROBES: 'velokit_wardrobes',
   SELECTED_WARDROBE: 'velokit_selected_wardrobe',
+  FAVORITE_LOCATIONS: 'velokit_favorite_locations',
 } as const;
 
 export const storage = {
@@ -266,6 +267,47 @@ export const storage = {
         } else {
           localStorage.removeItem(STORAGE_KEYS.SELECTED_WARDROBE);
         }
+      },
+
+      getFavoriteLocations: (): import('../types').Location[] => {
+        const favorites = localStorage.getItem(STORAGE_KEYS.FAVORITE_LOCATIONS);
+        if (!favorites) return [];
+        try {
+          return JSON.parse(favorites);
+        } catch {
+          return [];
+        }
+      },
+
+      setFavoriteLocations: (locations: import('../types').Location[]): void => {
+        localStorage.setItem(STORAGE_KEYS.FAVORITE_LOCATIONS, JSON.stringify(locations));
+      },
+
+      addFavoriteLocation: (location: import('../types').Location): void => {
+        const favorites = storage.getFavoriteLocations();
+        // Check if location already exists (by lat/lon with small tolerance)
+        const exists = favorites.some(
+          (fav) => Math.abs(fav.lat - location.lat) < 0.01 && Math.abs(fav.lon - location.lon) < 0.01
+        );
+        if (!exists) {
+          favorites.push(location);
+          storage.setFavoriteLocations(favorites);
+        }
+      },
+
+      removeFavoriteLocation: (location: import('../types').Location): void => {
+        const favorites = storage.getFavoriteLocations();
+        const filtered = favorites.filter(
+          (fav) => !(Math.abs(fav.lat - location.lat) < 0.01 && Math.abs(fav.lon - location.lon) < 0.01)
+        );
+        storage.setFavoriteLocations(filtered);
+      },
+
+      isFavoriteLocation: (location: import('../types').Location): boolean => {
+        const favorites = storage.getFavoriteLocations();
+        return favorites.some(
+          (fav) => Math.abs(fav.lat - location.lat) < 0.01 && Math.abs(fav.lon - location.lon) < 0.01
+        );
       },
     };
 

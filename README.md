@@ -7,6 +7,7 @@ A mobile-first Progressive Web App that recommends cycling clothing based on wea
 - **Location-based weather**: Uses browser geolocation or manual city input
 - **Smart recommendations**: Rule-based clothing recommendations based on temperature, wind, and rain
 - **PWA support**: Installable on iOS and Android with offline fallback
+- **Native mobile apps**: iOS and Android apps built with Capacitor
 - **Mobile-first design**: Optimized for mobile devices
 
 ## Setup
@@ -36,11 +37,66 @@ The app will be available at `http://localhost:5173/VeloKit/`
 
 ## Build
 
+### Web/PWA Build
+
 ```bash
 npm run build
 ```
 
 The built files will be in the `dist` directory.
+
+### Native Mobile Apps (iOS & Android)
+
+VeloKit uses [Capacitor](https://capacitorjs.com/) to build native iOS and Android apps.
+
+#### Prerequisites
+
+**For iOS:**
+- macOS with Xcode installed
+- CocoaPods: `sudo gem install cocoapods`
+
+**For Android:**
+- Android Studio installed
+- Android SDK configured
+- Java Development Kit (JDK)
+
+#### Building for Native Platforms
+
+1. Build the app for native platforms:
+```bash
+npm run build:native
+```
+
+2. Sync the web assets to native platforms:
+```bash
+npm run cap:sync
+```
+
+This builds the app and copies the web assets to both iOS and Android projects.
+
+#### Opening in Native IDEs
+
+**iOS:**
+```bash
+npm run cap:ios
+```
+This opens the project in Xcode where you can build and run on simulators or devices.
+
+**Android:**
+```bash
+npm run cap:android
+```
+This opens the project in Android Studio where you can build and run on emulators or devices.
+
+#### Development Workflow
+
+1. Make changes to your React code
+2. Run `npm run cap:sync` to sync changes to native platforms
+3. Test in Xcode (iOS) or Android Studio (Android)
+4. For web/PWA testing, use `npm run dev` (runs on `/VeloKit/` base path)
+5. For native testing, use `npm run build:native` then `npm run cap:sync`
+
+**Note:** The app automatically detects if it's running as a native app or PWA and adjusts the base path accordingly.
 
 ## Deployment
 

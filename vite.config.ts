@@ -2,6 +2,10 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+// Check if building for native (Capacitor) or web (PWA)
+const isNative = process.env.CAPACITOR === 'true';
+const base = isNative ? '/' : '/VeloKit/';
+
 export default defineConfig({
   plugins: [
     react(),
@@ -16,7 +20,7 @@ export default defineConfig({
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait-primary',
-        start_url: '/VeloKit/',
+        start_url: base,
         icons: [
           {
             src: 'pwa-192x192.png',
@@ -34,7 +38,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        navigateFallback: '/VeloKit/index.html',
+        navigateFallback: `${base}index.html`,
         navigateFallbackDenylist: [/^\/VeloKit\/docs/],
         runtimeCaching: [
           {
@@ -49,9 +53,11 @@ export default defineConfig({
             }
           }
         ]
-      }
+      },
+      // Disable PWA for native builds
+      disable: isNative
     })
   ],
-  base: '/VeloKit/'
+  base
 });
 

@@ -1,16 +1,30 @@
 {
   "name": "velokit",
-  "version": "1.0.0-4295101",
+  "version": "1.0.0-c9846b9",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:native": "CAPACITOR=true tsc && vite build",
     "preview": "vite preview",
     "predeploy": "node scripts/update-version.js",
     "deploy": "npm run build && npm run deploy:docs && gh-pages -d dist",
-    "deploy:docs": "mkdir -p dist/docs && cp -r docs/* dist/docs/"
+    "deploy:docs": "mkdir -p dist/docs && cp -r docs/* dist/docs/",
+    "cap:sync": "npm run build:native && npx cap sync",
+    "cap:ios": "npm run cap:sync && npx cap open ios",
+    "cap:android": "npm run cap:sync && npx cap open android",
+    "cap:copy": "npx cap copy",
+    "cap:update": "npx cap update"
   },
   "dependencies": {
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/app": "^8.0.0",
+    "@capacitor/cli": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/haptics": "^8.0.0",
+    "@capacitor/ios": "^8.0.0",
+    "@capacitor/keyboard": "^8.0.0",
+    "@capacitor/status-bar": "^8.0.0",
     "@types/leaflet": "^1.9.21",
     "leaflet": "^1.9.4",
     "react": "^18.2.0",
