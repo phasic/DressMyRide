@@ -863,7 +863,7 @@ export function ClothingGuide({}: GuideProps) {
         }
         // Also check if the scenario temp would match this range
         const scenarioTemp = scenario.weather.minFeelsLike;
-        const minMatch = range.minTemp === null || scenarioTemp > range.minTemp;
+        const minMatch = range.minTemp === null || scenarioTemp >= range.minTemp;
         const maxMatch = range.maxTemp === null || range.maxTemp === undefined || scenarioTemp <= range.maxTemp;
         return minMatch && maxMatch;
       });

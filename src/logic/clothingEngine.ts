@@ -63,7 +63,7 @@ function getClothingConfig(wardrobeOverride?: WardrobeConfig): ClothingConfig {
 }
 
 function matchesTemperatureRange(range: TemperatureRange, temp: number): boolean {
-  const minMatch = range.minTemp === null || temp > range.minTemp;
+  const minMatch = range.minTemp === null || temp >= range.minTemp;
   const maxMatch = range.maxTemp === null || range.maxTemp === undefined || temp <= range.maxTemp;
   return minMatch && maxMatch;
 }
@@ -97,9 +97,10 @@ export function recommendClothing(
   const isMetric = config.units === 'metric';
   
   // Convert to metric if needed for calculations
-  const temp = isMetric ? minFeelsLike : (minFeelsLike - 32) * 5/9;
+  // Round temperature to nearest whole number for matching (e.g., 4.9°C becomes 5°C)
+  const temp = Math.round(isMetric ? minFeelsLike : (minFeelsLike - 32) * 5/9);
   const wind = isMetric ? maxWindSpeed : maxWindSpeed * 1.60934; // mph to km/h
-  const startTemp = isMetric ? minTemp : (minTemp - 32) * 5/9;
+  const startTemp = Math.round(isMetric ? minTemp : (minTemp - 32) * 5/9);
 
   const head: ClothingItem[] = [];
   const neckFace: ClothingItem[] = [];
@@ -117,6 +118,7 @@ export function recommendClothing(
   const matchingTempRanges = clothingConfig.temperatureRanges.filter(range =>
     matchesTemperatureRange(range, temp)
   );
+
 
   // Combine items from all matching ranges
   for (const tempRange of matchingTempRanges) {
