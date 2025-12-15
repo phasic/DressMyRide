@@ -1322,9 +1322,34 @@ main {
 
 .quick-weather-badges {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   width: 100%;
   flex-wrap: nowrap;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 20px;
+  padding: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+:root.dark .quick-weather-badges {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .quick-weather-badges {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
 }
 
 .quick-weather-badge {
@@ -1398,26 +1423,91 @@ main {
 }
 
 :root.dark .quick-weather-badge {
-  background-color: rgba(10, 132, 255, 0.2);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  box-shadow: 0 4px 16px rgba(10, 132, 255, 0.2), 0 0 1px rgba(10, 132, 255, 0.3);
-  border: 0.5px solid rgba(10, 132, 255, 0.25);
+  background: linear-gradient(135deg, rgba(28, 28, 30, 0.6) 0%, rgba(28, 28, 30, 0.4) 100%);
+  backdrop-filter: blur(30px) saturate(200%);
+  -webkit-backdrop-filter: blur(30px) saturate(200%);
+  box-shadow: 
+    0 4px 16px rgba(10, 132, 255, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.15) inset,
+    0 1px 4px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+  position: relative;
+}
+
+:root.dark .quick-weather-badge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  pointer-events: none;
+}
+
+:root.dark .quick-weather-badge .badge-value {
+  color: #FFFFFF;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+:root.dark .quick-weather-badge .badge-label {
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+:root.dark .quick-weather-badge .badge-unit {
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not(.light) .quick-weather-badge {
-    background-color: rgba(10, 132, 255, 0.2);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    box-shadow: 0 4px 16px rgba(10, 132, 255, 0.2), 0 0 1px rgba(10, 132, 255, 0.3);
-    border: 0.5px solid rgba(10, 132, 255, 0.25);
+    background: linear-gradient(135deg, rgba(28, 28, 30, 0.6) 0%, rgba(28, 28, 30, 0.4) 100%);
+    backdrop-filter: blur(30px) saturate(200%);
+    -webkit-backdrop-filter: blur(30px) saturate(200%);
+    box-shadow: 
+      0 4px 16px rgba(10, 132, 255, 0.15),
+      0 0 0 1px rgba(255, 255, 255, 0.15) inset,
+      0 1px 4px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #FFFFFF;
+    position: relative;
+  }
+
+  :root:not(.light) .quick-weather-badge::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    pointer-events: none;
+  }
+
+  :root:not(.light) .quick-weather-badge .badge-value {
+    color: #FFFFFF;
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+
+  :root:not(.light) .quick-weather-badge .badge-label {
+    color: rgba(255, 255, 255, 0.95);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+
+  :root:not(.light) .quick-weather-badge .badge-unit {
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   }
 }
 
 @media (max-width: 480px) {
   .quick-weather-badges {
-    gap: 6px;
+    gap: 4px;
+    padding: 6px;
   }
   
   .quick-weather-badge {
