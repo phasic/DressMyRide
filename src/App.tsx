@@ -339,8 +339,7 @@ function App() {
         {!loading && page === 'welcome' && (
           <Welcome
             onGetStarted={() => {
-              setPreviousPage('home');
-              setPage('settings');
+              setPage('home');
             }}
             onTryDemo={() => setPage('home')}
           />

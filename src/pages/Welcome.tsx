@@ -75,21 +75,13 @@ export function Welcome({ onGetStarted, onTryDemo }: WelcomeProps) {
           <div className="welcome-section">
             <h3>Get Started</h3>
             <p className="welcome-section-text">
-              To use the full app, you'll need a free OpenWeather API key. You can get one at{' '}
-              <a 
-                href="https://openweathermap.org/api/one-call-3" 
-                target="_blank" 
-                rel="noopener noreferrer"
-              >
-                openweathermap.org
-              </a>
-              . The One Call API 3.0 has a free tier available.
+              Start getting personalized cycling clothing recommendations based on real-time weather conditions.
             </p>
             <button 
               className="btn btn-primary welcome-btn"
               onClick={handleGetStarted}
             >
-              Add API Key
+              Let's Go
             </button>
           </div>
 

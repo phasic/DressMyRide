@@ -3,15 +3,13 @@ import { storage } from '../utils/storage';
 
 const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
 
+// API base URL - use environment variable in production, empty string in dev (uses Vite proxy)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
 export async function fetchWeatherForecast(
   location: Location,
   config: RideConfig
 ): Promise<WeatherSummary> {
-  const apiKey = storage.getApiKey();
-  if (!apiKey) {
-    throw new Error('OpenWeather API key not configured');
-  }
-
   // Check cache (keyed by location, start time, and duration)
   // Round start time to nearest hour for cache key to avoid too many cache entries
   // Round coordinates to 1 decimal place to match the rounding done in Home.tsx
@@ -27,9 +25,10 @@ export async function fetchWeatherForecast(
     return cached.data;
   }
 
-  // Fetch from API
+  // Fetch from middleware API (API key is handled server-side)
   const units = config.units === 'imperial' ? 'imperial' : 'metric';
-  const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${location.lat}&lon=${location.lon}&units=${units}&exclude=current,minutely,daily,alerts&appid=${apiKey}`;
+  const startTime = Math.floor(config.startTime.getTime() / 1000);
+  const url = `${API_BASE_URL}/api/weather/forecast?lat=${location.lat}&lon=${location.lon}&units=${units}&startTime=${startTime}&durationHours=${config.durationHours}`;
 
   const response = await fetch(url);
   if (!response.ok) {
@@ -46,14 +45,8 @@ export async function fetchWeatherForecast(
 
   const data: WeatherForecast = await response.json();
 
-  // Calculate ride window
-  const startTime = config.startTime.getTime() / 1000;
-  const endTime = startTime + config.durationHours * 3600;
-
-  // Filter hourly data for ride window
-  const rideHours = data.hourly.filter(
-    (hour) => hour.dt >= startTime && hour.dt <= endTime
-  );
+  // Middleware already filters hourly data, so use it directly
+  const rideHours = data.hourly || [];
 
   if (rideHours.length === 0) {
     throw new Error('No weather data available for ride window');
@@ -94,28 +87,24 @@ export async function fetchWeatherForecast(
 }
 
 export async function geocodeCity(cityName: string): Promise<Location> {
-  const apiKey = storage.getApiKey();
-  if (!apiKey) {
-    throw new Error('OpenWeather API key not configured');
-  }
-
-  const url = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(cityName)}&limit=1&appid=${apiKey}`;
+  const url = `${API_BASE_URL}/api/weather/geocode?city=${encodeURIComponent(cityName)}`;
 
   const response = await fetch(url);
   if (!response.ok) {
-    throw new Error(`Geocoding API error: ${response.statusText}`);
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `Geocoding API error: ${response.statusText}`);
   }
 
   const data = await response.json();
-  if (!data || data.length === 0) {
+  if (!data) {
     throw new Error('City not found');
   }
 
   // Round coordinates to 1 decimal place (~11km precision) for consistent caching
   return {
-    lat: Math.round(data[0].lat * 10) / 10,
-    lon: Math.round(data[0].lon * 10) / 10,
-    city: data[0].name,
+    lat: Math.round(data.lat * 10) / 10,
+    lon: Math.round(data.lon * 10) / 10,
+    city: data.name,
   };
 }
 
@@ -131,14 +120,9 @@ export async function reverseGeocode(lat: number, lon: number): Promise<string |
     return cached;
   }
 
-  const apiKey = storage.getApiKey();
-  if (!apiKey) {
-    return null; // Silently fail if no API key
-  }
-
   try {
     // Use precise coordinates for API call, but cache with 2 decimal places
-    const url = `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${apiKey}`;
+    const url = `${API_BASE_URL}/api/weather/reverse-geocode?lat=${lat}&lon=${lon}`;
     const response = await fetch(url);
     
     if (!response.ok) {
@@ -146,12 +130,9 @@ export async function reverseGeocode(lat: number, lon: number): Promise<string |
     }
 
     const data = await response.json();
-    if (!data || data.length === 0) {
-      return null;
-    }
-
+    const cityName = data.name || null;
+    
     // Cache the result with rounded coordinates
-    const cityName = data[0].name || null;
     if (cityName) {
       storage.setGeocodeCache(roundedLat, roundedLon, cityName);
     }

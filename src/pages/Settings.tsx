@@ -11,7 +11,6 @@ interface SettingsProps {
 }
 
 export function Settings({ onBack, onAbout, onShowInstallPrompt, onWeatherOverride }: SettingsProps) {
-  const [apiKey, setApiKey] = useState(() => storage.getApiKey() || '');
   const [units, setUnits] = useState<'metric' | 'imperial'>(() => storage.getUnits());
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>(() => storage.getTheme());
   const [dateFormat, setDateFormat] = useState<'custom' | 'system'>(() => storage.getDateFormat());
@@ -24,11 +23,6 @@ export function Settings({ onBack, onAbout, onShowInstallPrompt, onWeatherOverri
   const [saved, setSaved] = useState(false);
   const [savedMessage, setSavedMessage] = useState<string>('');
   const [showClearCacheConfirm, setShowClearCacheConfirm] = useState(false);
-  const [isApiKeyLocked, setIsApiKeyLocked] = useState(() => {
-    const key = storage.getApiKey();
-    return !!key && key.length > 0;
-  });
-  const [showUnlockConfirm, setShowUnlockConfirm] = useState(false);
 
   useEffect(() => {
     storage.setUnits(units);
@@ -83,17 +77,11 @@ export function Settings({ onBack, onAbout, onShowInstallPrompt, onWeatherOverri
       return;
     }
     
-    storage.setApiKey(apiKey);
     storage.setUnits(units);
     storage.setTheme(theme);
     storage.setDateFormat(dateFormat);
     storage.setDefaultDuration(defaultDuration);
     applyTheme(theme);
-    
-    // Lock API key if it's valid and not empty
-    if (apiKey && apiKey.length > 0) {
-      setIsApiKeyLocked(true);
-    }
     
     setSavedMessage('Settings saved!');
     setSaved(true);
@@ -101,17 +89,6 @@ export function Settings({ onBack, onAbout, onShowInstallPrompt, onWeatherOverri
       setSaved(false);
       onBack();
     }, 500);
-  };
-
-  const handleUnlockApiKey = () => {
-    setIsApiKeyLocked(false);
-    setShowUnlockConfirm(false);
-  };
-
-  const handleLockApiKey = () => {
-    if (apiKey && apiKey.length > 0) {
-      setIsApiKeyLocked(true);
-    }
   };
 
   const applyTheme = (selectedTheme: 'light' | 'dark' | 'system') => {
@@ -261,7 +238,7 @@ export function Settings({ onBack, onAbout, onShowInstallPrompt, onWeatherOverri
                 <span className="toggle-slider"></span>
               </label>
             </div>
-            <small>Use random weather conditions to try the app without an API key</small>
+            <small>Use random weather conditions to try the app without connecting to the weather API</small>
             {demoMode && (
               <div style={{ marginTop: '12px' }}>
                 <button
@@ -278,61 +255,6 @@ export function Settings({ onBack, onAbout, onShowInstallPrompt, onWeatherOverri
                   Randomize Weather
                 </button>
               </div>
-            )}
-          </div>
-          <div className="form-group">
-            <label htmlFor="apiKey">OpenWeather API Key</label>
-            <input
-              id="apiKey"
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="Enter your API key"
-              required={!isApiKeyLocked}
-              disabled={isApiKeyLocked}
-              style={{ opacity: isApiKeyLocked ? 0.6 : 1 }}
-            />
-            {isApiKeyLocked && (
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setShowUnlockConfirm(true)}
-                style={{ marginTop: '8px', width: '100%' }}
-              >
-                Unlock API Key
-              </button>
-            )}
-            {!isApiKeyLocked && (
-              <>
-                {apiKey && apiKey.length > 0 && (
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={handleLockApiKey}
-                    style={{ marginTop: '8px', width: '100%' }}
-                  >
-                    Lock API Key
-                  </button>
-                )}
-                <small>
-                  Get your API key at{' '}
-                <a
-                  href="https://openweathermap.org/api"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  openweathermap.org
-                </a>
-                . <strong>Note:</strong> This app requires One Call API 3.0, which needs a subscription (free tier available). Subscribe at{' '}
-                <a
-                  href="https://openweathermap.org/api/one-call-3"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  openweathermap.org/api/one-call-3
-                </a>
-              </small>
-              </>
             )}
           </div>
           <div className="settings-group-item" onClick={() => setShowClearCacheConfirm(true)}>
@@ -390,30 +312,6 @@ export function Settings({ onBack, onAbout, onShowInstallPrompt, onWeatherOverri
         </div>
       )}
 
-      {showUnlockConfirm && (
-        <div className="modal-overlay" onClick={() => setShowUnlockConfirm(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3>Unlock API Key?</h3>
-            <p>Are you sure you want to unlock the API key? You will be able to edit or delete it.</p>
-            <div className="modal-actions">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setShowUnlockConfirm(false)}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleUnlockApiKey}
-              >
-                Unlock
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {onWeatherOverride && (
         <div style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid var(--separator-color)' }}>
