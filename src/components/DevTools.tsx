@@ -10,6 +10,7 @@ interface DevToolsProps {
 export function DevTools({ onWeatherOverride }: DevToolsProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLocalhost, setIsLocalhost] = useState(false);
+  const [apiServer, setApiServer] = useState<'local' | 'production'>(() => storage.getApiServer());
   const [overrides, setOverrides] = useState<Partial<WeatherSummary>>(() => {
     const saved = localStorage.getItem('velokit_dev_overrides');
     return saved ? JSON.parse(saved) : {};
@@ -184,6 +185,45 @@ export function DevTools({ onWeatherOverride }: DevToolsProps) {
                 <p>Weather data is being overridden. API responses will be modified.</p>
               </div>
             )}
+
+            <div className="dev-tools-section-divider"></div>
+
+            <div className="dev-tools-group">
+              <h4>API Server Selection</h4>
+              <div className="dev-tools-toggle-container">
+                <label className="dev-tools-toggle-label">
+                  <input
+                    type="radio"
+                    name="apiServer"
+                    value="production"
+                    checked={apiServer === 'production'}
+                    onChange={() => {
+                      storage.setApiServer('production');
+                      setApiServer('production');
+                      window.location.reload();
+                    }}
+                  />
+                  <span>Production Server</span>
+                </label>
+                <label className="dev-tools-toggle-label">
+                  <input
+                    type="radio"
+                    name="apiServer"
+                    value="local"
+                    checked={apiServer === 'local'}
+                    onChange={() => {
+                      storage.setApiServer('local');
+                      setApiServer('local');
+                      window.location.reload();
+                    }}
+                  />
+                  <span>Local Server (localhost:3001)</span>
+                </label>
+              </div>
+              <p className="dev-tools-hint">
+                Current: <strong>{apiServer === 'local' ? 'Local (http://localhost:3001)' : 'Production (Railway)'}</strong>
+              </p>
+            </div>
 
             <div className="dev-tools-section-divider"></div>
 

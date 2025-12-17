@@ -3,8 +3,22 @@ import { storage } from '../utils/storage';
 
 const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
 
-// API base URL - use environment variable in production, empty string in dev (uses Vite proxy)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+// Get API base URL dynamically based on dev tools selection
+function getApiBaseUrl(): string {
+  const apiServer = storage.getApiServer();
+  const productionUrl = import.meta.env.VITE_API_BASE_URL || 'https://velokit-production.up.railway.app';
+  const isDev = import.meta.env.DEV;
+  
+  if (apiServer === 'local') {
+    if (isDev) {
+      return ''; // Empty string uses Vite proxy in dev mode
+    } else {
+      return 'http://localhost:3001'; // Direct localhost in production build
+    }
+  }
+  
+  return productionUrl;
+}
 
 export async function fetchWeatherForecast(
   location: Location,
@@ -28,7 +42,8 @@ export async function fetchWeatherForecast(
   // Fetch from middleware API (API key is handled server-side)
   const units = config.units === 'imperial' ? 'imperial' : 'metric';
   const startTime = Math.floor(config.startTime.getTime() / 1000);
-  const url = `${API_BASE_URL}/api/weather/forecast?lat=${location.lat}&lon=${location.lon}&units=${units}&startTime=${startTime}&durationHours=${config.durationHours}`;
+  const apiBaseUrl = getApiBaseUrl();
+  const url = `${apiBaseUrl}/api/weather/forecast?lat=${location.lat}&lon=${location.lon}&units=${units}&startTime=${startTime}&durationHours=${config.durationHours}`;
 
   const response = await fetch(url);
   if (!response.ok) {
@@ -87,7 +102,8 @@ export async function fetchWeatherForecast(
 }
 
 export async function geocodeCity(cityName: string): Promise<Location> {
-  const url = `${API_BASE_URL}/api/weather/geocode?city=${encodeURIComponent(cityName)}`;
+  const apiBaseUrl = getApiBaseUrl();
+  const url = `${apiBaseUrl}/api/weather/geocode?city=${encodeURIComponent(cityName)}`;
 
   const response = await fetch(url);
   if (!response.ok) {
@@ -122,7 +138,8 @@ export async function reverseGeocode(lat: number, lon: number): Promise<string |
 
   try {
     // Use precise coordinates for API call, but cache with 2 decimal places
-    const url = `${API_BASE_URL}/api/weather/reverse-geocode?lat=${lat}&lon=${lon}`;
+    const apiBaseUrl = getApiBaseUrl();
+    const url = `${apiBaseUrl}/api/weather/reverse-geocode?lat=${lat}&lon=${lon}`;
     const response = await fetch(url);
     
     if (!response.ok) {

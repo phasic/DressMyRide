@@ -17,6 +17,7 @@ const STORAGE_KEYS = {
   WARDROBES: 'velokit_wardrobes',
   SELECTED_WARDROBE: 'velokit_selected_wardrobe',
   FAVORITE_LOCATIONS: 'velokit_favorite_locations',
+  API_SERVER: 'velokit_api_server', // 'local' or 'production'
 } as const;
 
 export const storage = {
@@ -308,6 +309,15 @@ export const storage = {
         return favorites.some(
           (fav) => Math.abs(fav.lat - location.lat) < 0.01 && Math.abs(fav.lon - location.lon) < 0.01
         );
+      },
+
+      getApiServer: (): 'local' | 'production' => {
+        const server = localStorage.getItem(STORAGE_KEYS.API_SERVER);
+        return (server === 'local' || server === 'production' ? server : 'production') as 'local' | 'production';
+      },
+
+      setApiServer: (server: 'local' | 'production'): void => {
+        localStorage.setItem(STORAGE_KEYS.API_SERVER, server);
       },
     };
 

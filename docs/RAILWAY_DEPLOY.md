@@ -20,12 +20,19 @@
 
 ## Step 3: Configure the Service
 
-1. Railway should detect it's a Node.js project
-2. Click on the service to configure it
-3. Go to **"Settings"** tab
-4. Set **Root Directory** to: `server`
-5. Set **Build Command** to: `npm install` (or leave blank, Railway auto-detects)
-6. Set **Start Command** to: `npm start`
+Railway should auto-detect the `server` directory because we have `railway.toml` configured.
+
+**If you need to manually set Root Directory:**
+
+1. Click on your **service** (the one Railway created)
+2. Go to **"Settings"** tab
+3. Look for **"Source"** section or **"Root Directory"**
+4. If you see it, set to: `server`
+5. If you DON'T see it, that's okay - the `railway.toml` file will handle it
+
+**Alternative: The `railway.toml` file I created will:**
+- Tell Railway to run `cd server && npm start`
+- This works even if Root Directory setting isn't visible
 
 ## Step 4: Set Environment Variables
 
